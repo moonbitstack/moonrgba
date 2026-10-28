@@ -186,10 +186,10 @@ fn Cursor::skip_spaces(self : Cursor) -> Unit {
 }
 
 ///|
-/// One component of a function, before the syntax says what it means. The same
-/// number means different things in different functions: `50%` is half a
-/// lightness in `oklab()` and 62.5 units of `a` in `lab()`, and only the
-/// function knows which.
+/// One component of a function, read but not yet interpreted. The same `50%`
+/// is half a lightness in `oklab()` and 62.5 units of `a` in `lab()`, and only
+/// the function knows which, so the term carries what was written and the
+/// function decides what it means.
 priv enum Term {
   /// The `none` keyword: a component the author left out.
   Missing
@@ -197,6 +197,31 @@ priv enum Term {
   Percent(Double)
   /// An angle, already converted to degrees.
   Angle(Double)
+}
+
+///|
+/// Which component a function is asking for. The wish decides both what is
+/// allowed and what the number means, and keeping the two together is what lets
+/// a refusal point at the component that was wrong rather than at the bracket
+/// that follows it.
+priv enum Wanted {
+  /// A channel of `rgb()`: a number 0–255, or a percentage.
+  Channel
+  /// A component of `color()`: a number, or a percentage of one. Nothing is
+  /// clamped, because a wide-gamut space may hold a colour outside itself.
+  Fraction
+  /// Saturation or lightness in `hsl()`, whiteness or blackness in `hwb()`:
+  /// a percentage whether or not the sign is written.
+  Percentage
+  /// `a`, `b` and chroma, where a percentage is a share of this scale.
+  Scaled(Double)
+  /// A hue: a number of degrees, or an angle in another unit.
+  Hue
+  /// An alpha: a number or percentage of one, clamped.
+  Alpha
+  /// A lightness, clamped to its own scale: 100 for the Lab family and 1 for
+  /// the Oklab family.
+  Light(Double)
 }
 
 ///|
@@ -259,6 +284,7 @@ fn parse_number(cursor : Cursor) -> Double raise Refused {
 }
 
 ///|
+/// An identifier: the name of a function, a keyword, or a unit.
 fn Cursor::ident(self : Cursor) -> StringView {
   let start = self.at
   while is_name_char(self.peek()) {
@@ -268,8 +294,8 @@ fn Cursor::ident(self : Cursor) -> StringView {
 }
 
 ///|
-/// A component: a number, a percentage, an angle, or `none`.
-fn parse_term(cursor : Cursor) -> Term raise Refused {
+/// A component, a number, a percentage, an angle, or `none`.
+fn read_term(cursor : Cursor) -> Term raise Refused {
   if is_name_start(cursor.peek()) {
     let start = cursor.at
     let word = cursor.ident()
@@ -309,50 +335,8 @@ fn parse_term(cursor : Cursor) -> Term raise Refused {
 }
 
 ///|
-/// A percentage of `scale`, or the bare number. `lab(50% 50% 0)` writes `a` as
-/// half of 125, so the scale is what tells `50%` from `50`.
-fn Term::scaled(self : Term, scale : Double) -> Double raise Refused {
-  match self {
-    Missing => @double.not_a_number
-    Number(value) => value
-    Percent(value) => value / 100.0 * scale
-    Angle(_) => raise Unexpected(at=0, got="an angle", want="a number")
-  }
-}
-
-///|
-/// A percentage of one: `50%` is `0.5`, and a bare number is already a fraction.
-fn Term::fraction(self : Term) -> Double raise Refused {
-  match self {
-    Missing => @double.not_a_number
-    Number(value) => value
-    Percent(value) => value / 100.0
-    Angle(_) => raise Unexpected(at=0, got="an angle", want="a number")
-  }
-}
-
-///|
-/// A component that CSS defines as a percentage whether or not one is written:
-/// `hsl(120 30 50)` and `hsl(120 30% 50%)` are the same colour.
-fn Term::percentage(self : Term) -> Double raise Refused {
-  match self {
-    Missing => @double.not_a_number
-    Number(value) => value / 100.0
-    Percent(value) => value / 100.0
-    Angle(_) => raise Unexpected(at=0, got="an angle", want="a percentage")
-  }
-}
-
-///|
-/// A hue in degrees, wrapped into 0–360. A missing hue stays missing.
-fn Term::hue(self : Term) -> Double raise Refused {
-  let degrees = match self {
-    Missing => return @double.not_a_number
-    Number(value) => value
-    Angle(value) => value
-    Percent(_) =>
-      raise Unexpected(at=0, got="a percentage", want="a number or angle")
-  }
+/// The hue in 0–360, which is the only range a hue angle is kept in.
+fn wrap_hue(degrees : Double) -> Double {
   let wrapped = degrees % 360.0
   if wrapped < 0.0 {
     wrapped + 360.0
@@ -362,8 +346,78 @@ fn Term::hue(self : Term) -> Double raise Refused {
 }
 
 ///|
-/// A chroma, which cannot be negative: a negative chroma means the hue turned
-/// half way round, and the syntax says so with a hue instead.
+/// One component, read and converted, refusing a kind the function cannot take
+/// at the offset where it stands.
+fn parse_component(cursor : Cursor, wanted : Wanted) -> Double raise Refused {
+  convert_term(read_term(cursor), wanted, cursor)
+}
+
+///|
+/// A term that has been read already, converted — which is what the legacy
+/// argument lists need, since they must look at the kind of every component
+/// before they know whether the list is legal at all.
+fn convert_term(
+  term : Term,
+  wanted : Wanted,
+  cursor : Cursor,
+) -> Double raise Refused {
+  match term {
+    Missing => @double.not_a_number
+    Angle(degrees) =>
+      match wanted {
+        Hue => wrap_hue(degrees)
+        _ =>
+          raise cursor.unexpected(
+            "a number, because only a hue may be an angle",
+          )
+      }
+    Percent(value) =>
+      match wanted {
+        Hue => raise cursor.unexpected("a number or angle, not a percentage")
+        Channel => clamp01(value / 100.0)
+        Fraction => value / 100.0
+        Percentage => clamp01(value / 100.0)
+        Scaled(scale) => value / 100.0 * scale
+        Alpha => clamp01(value / 100.0)
+        Light(scale) => clamp01(value / 100.0) * scale
+      }
+    Number(value) =>
+      match wanted {
+        Hue => wrap_hue(value)
+        Channel => clamp01(value / 255.0)
+        Fraction => value
+        Percentage => clamp01(value / 100.0)
+        Scaled(_) => value
+        Alpha => clamp01(value)
+        Light(scale) => clamp01(value / scale) * scale
+      }
+  }
+}
+
+///|
+/// A component after the space that separates two of them.
+fn parse_component_after_space(
+  cursor : Cursor,
+  wanted : Wanted,
+) -> Double raise Refused {
+  cursor.skip_spaces()
+  parse_component(cursor, wanted)
+}
+
+///|
+/// The alpha of a legacy argument list, where `none` had not been invented yet.
+fn legacy_alpha(cursor : Cursor, term : Term) -> Double raise Refused {
+  if term is Missing {
+    raise cursor.unexpected(
+      "a number for alpha, because `none` is modern syntax",
+    )
+  }
+  convert_term(term, Alpha, cursor)
+}
+
+///|
+/// A chroma, which cannot be negative: a negative one means the hue turned half
+/// way round, and the syntax says so with a hue instead.
 fn non_negative(value : Double) -> Double {
   if value.is_nan() {
     value
@@ -375,25 +429,14 @@ fn non_negative(value : Double) -> Double {
 }
 
 ///|
-/// An alpha, clamped because there is nothing outside 0–1 to be.
-fn Term::alpha(self : Term) -> Double raise Refused {
-  match self {
-    Missing => @double.not_a_number
-    Number(value) => clamp01(value)
-    Percent(value) => clamp01(value / 100.0)
-    Angle(_) => raise Unexpected(at=0, got="an angle", want="a number")
-  }
-}
-
-///|
 /// The alpha after a slash, if there is one.
 fn parse_alpha(cursor : Cursor) -> Double raise Refused {
   cursor.skip_spaces()
   if cursor.eat(0x2F) {
     cursor.skip_spaces()
-    let term = parse_term(cursor)
+    let alpha = parse_component(cursor, Alpha)
     cursor.skip_spaces()
-    return term.alpha()
+    return alpha
   }
   1.0
 }
@@ -441,239 +484,163 @@ fn parse_hex(cursor : Cursor) -> Color raise Refused {
 }
 
 ///|
-/// `rgb()` and `rgba()`, in either syntax.
+/// `rgb()` and `rgba()`, in either syntax. The first separator decides which:
+/// a comma means the legacy list, whose rules are stricter, and a space the
+/// modern one.
 fn parse_rgb(cursor : Cursor, legacy_name : Bool) -> Color raise Refused {
-  let first = parse_term(cursor)
-  if first is Angle(_) {
-    raise cursor.unexpected("a number or percentage")
-  }
-  let legacy = cursor.at_comma()
-  if legacy {
+  let first = read_term(cursor)
+  if cursor.at_comma() {
     if !legacy_name {
       raise cursor.unexpected("a space, because rgb() has no comma syntax")
     }
     return parse_rgb_legacy(cursor, first)
   }
-  let second = parse_term_after_space(cursor)
-  let third = parse_term_after_space(cursor)
+  let red = convert_term(first, Channel, cursor)
+  let green = parse_component_after_space(cursor, Channel)
+  let blue = parse_component_after_space(cursor, Channel)
   let alpha = parse_alpha(cursor)
-  let channel = fn(term : Term) {
-    if term is Missing {
-      @double.not_a_number
-    } else {
-      let value = match term {
-        Number(value) => value / 255.0
-        Percent(value) => value / 100.0
-        _ => 0.0
-      }
-      clamp01(value)
-    }
-  }
-  Color::srgb(channel(first), channel(second), channel(third), alpha~)
+  Color::srgb(red, green, blue, alpha~)
 }
 
 ///|
+/// The comma syntax: three channels of the same kind, an optional fourth
+/// component for alpha, and no `none` anywhere.
 fn parse_rgb_legacy(cursor : Cursor, first : Term) -> Color raise Refused {
   ignore(cursor.eat(0x2C))
   cursor.skip_spaces()
-  let second = parse_term(cursor)
+  let second = read_term(cursor)
   cursor.skip_spaces()
   if !cursor.eat(0x2C) {
     raise cursor.unexpected("a comma")
   }
   cursor.skip_spaces()
-  let third = parse_term(cursor)
+  let third = read_term(cursor)
   let alpha = if cursor.at_comma() {
     ignore(cursor.eat(0x2C))
     cursor.skip_spaces()
-    let term = parse_term(cursor)
-    cursor.skip_spaces()
-    if term is Missing {
-      raise cursor.unexpected(
-        "a number for alpha, because `none` is modern syntax",
-      )
-    }
-    term.alpha()
+    legacy_alpha(cursor, read_term(cursor))
   } else {
     cursor.skip_spaces()
     1.0
   }
-  // `none` is a modern-syntax keyword; the legacy grammar predates it.
-  if first is Missing || second is Missing || third is Missing {
-    raise cursor.unexpected("numbers, because `none` is modern syntax")
+  // One match decides both whether the list is legal and what it means: all
+  // numbers, or all percentages, and no `none`, which the modern syntax added.
+  let channels = match (first, second, third) {
+    (Number(r), Number(g), Number(b)) =>
+      Some((clamp01(r / 255.0), clamp01(g / 255.0), clamp01(b / 255.0)))
+    (Percent(r), Percent(g), Percent(b)) =>
+      Some((clamp01(r / 100.0), clamp01(g / 100.0), clamp01(b / 100.0)))
+    (Missing, _, _) | (_, Missing, _) | (_, _, Missing) =>
+      raise cursor.unexpected("numbers, because `none` is modern syntax")
+    _ =>
+      raise cursor.unexpected("three numbers or three percentages, not a mix")
   }
-  // A legacy argument list is all numbers or all percentages. Mixing them was
-  // never valid, and a reader that accepted it would move every later value.
-  let all_percent = first is Percent(_) &&
-    second is Percent(_) &&
-    third is Percent(_)
-  let all_number = first is Number(_) &&
-    second is Number(_) &&
-    third is Number(_)
-  if !all_percent && !all_number {
-    raise cursor.unexpected("three numbers or three percentages, not a mix")
+  match channels {
+    Some((r, g, b)) => Color::srgb(r, g, b, alpha~)
+    None => raise cursor.unexpected("three numbers or three percentages")
   }
-  let channel = fn(term : Term) {
-    let value = match term {
-      Number(value) => value / 255.0
-      Percent(value) => value / 100.0
-      _ => @double.not_a_number
-    }
-    if value.is_nan() {
-      value
-    } else {
-      clamp01(value)
-    }
-  }
-  Color::srgb(channel(first), channel(second), channel(third), alpha~)
 }
 
 ///|
-fn parse_term_after_space(cursor : Cursor) -> Term raise Refused {
-  cursor.skip_spaces()
-  parse_term(cursor)
-}
-
-///|
-/// `hsl()` and `hsla()`.
+/// `hsl()` and `hsla()`, in either syntax.
 fn parse_hsl(cursor : Cursor, legacy_name : Bool) -> Color raise Refused {
-  let hue = parse_term(cursor)
-  if hue is Percent(_) {
-    raise cursor.unexpected("a number or angle")
-  }
+  let first = read_term(cursor)
   if cursor.at_comma() {
     if !legacy_name {
       raise cursor.unexpected("a space, because hsl() has no comma syntax")
     }
+    let hue = match first {
+      Number(value) => wrap_hue(value)
+      Angle(degrees) => wrap_hue(degrees)
+      _ => raise cursor.unexpected("a number or angle for the hue")
+    }
     ignore(cursor.eat(0x2C))
     cursor.skip_spaces()
-    let saturation = parse_term(cursor)
+    let saturation = read_term(cursor)
     cursor.skip_spaces()
     if !cursor.eat(0x2C) {
       raise cursor.unexpected("a comma")
     }
     cursor.skip_spaces()
-    let lightness = parse_term(cursor)
-    // A legacy list requires percentages here, unlike the modern one.
-    if !(saturation is Percent(_)) || !(lightness is Percent(_)) {
-      raise cursor.unexpected("percentages for saturation and lightness")
-    }
-    if hue is Missing || saturation is Missing || lightness is Missing {
-      raise cursor.unexpected("numbers, because `none` is modern syntax")
+    let lightness = read_term(cursor)
+    // A legacy list requires percentages here, which the modern one does not.
+    let pair = match (saturation, lightness) {
+      (Percent(s), Percent(l)) => Some((clamp01(s / 100.0), clamp01(l / 100.0)))
+      (Missing, _) | (_, Missing) =>
+        raise cursor.unexpected("percentages, because `none` is modern syntax")
+      _ => raise cursor.unexpected("percentages for saturation and lightness")
     }
     let alpha = if cursor.at_comma() {
       ignore(cursor.eat(0x2C))
       cursor.skip_spaces()
-      let term = parse_term(cursor)
-      cursor.skip_spaces()
-      if term is Missing {
-        raise cursor.unexpected(
-          "a number for alpha, because `none` is modern syntax",
-        )
-      }
-      term.alpha()
+      legacy_alpha(cursor, read_term(cursor))
     } else {
       cursor.skip_spaces()
       1.0
     }
-    return Color::hsl(
-      hue.hue(),
-      clamp01(saturation.percentage()),
-      clamp01(lightness.percentage()),
-      alpha~,
-    )
+    match pair {
+      Some((saturation, lightness)) =>
+        Color::hsl(hue, saturation, lightness, alpha~)
+      None =>
+        raise cursor.unexpected("percentages for saturation and lightness")
+    }
+  } else {
+    let hue = convert_term(first, Hue, cursor)
+    let saturation = parse_component_after_space(cursor, Percentage)
+    let lightness = parse_component_after_space(cursor, Percentage)
+    let alpha = parse_alpha(cursor)
+    Color::hsl(hue, saturation, lightness, alpha~)
   }
-  let saturation = parse_term_after_space(cursor)
-  let lightness = parse_term_after_space(cursor)
-  let alpha = parse_alpha(cursor)
-  Color::hsl(
-    hue.hue(),
-    clamp01(saturation.percentage()),
-    clamp01(lightness.percentage()),
-    alpha~,
-  )
 }
 
 ///|
 /// `hwb()`.
 fn parse_hwb(cursor : Cursor) -> Color raise Refused {
-  let hue = parse_term(cursor)
-  let whiteness = parse_term_after_space(cursor)
-  let blackness = parse_term_after_space(cursor)
+  let hue = parse_component(cursor, Hue)
+  let whiteness = parse_component_after_space(cursor, Percentage)
+  let blackness = parse_component_after_space(cursor, Percentage)
   let alpha = parse_alpha(cursor)
-  Color::hwb(
-    hue.hue(),
-    clamp01(whiteness.percentage()),
-    clamp01(blackness.percentage()),
-    alpha~,
-  )
+  Color::hwb(hue, whiteness, blackness, alpha~)
 }
 
 ///|
 /// `lab()`: lightness 0–100, `a` and `b` unbounded, and 100% of `a` is 125.
 fn parse_lab(cursor : Cursor) -> Color raise Refused {
-  let lightness = parse_term(cursor)
-  let a = parse_term_after_space(cursor)
-  let b = parse_term_after_space(cursor)
+  let lightness = parse_component(cursor, Light(100.0))
+  let a = parse_component_after_space(cursor, Scaled(125.0))
+  let b = parse_component_after_space(cursor, Scaled(125.0))
   let alpha = parse_alpha(cursor)
-  Color::lab(
-    clamp01(lightness.scaled(100.0) / 100.0) * 100.0,
-    a.scaled(125.0),
-    b.scaled(125.0),
-    alpha~,
-  )
+  Color::lab(lightness, a, b, alpha~)
 }
 
 ///|
 /// `lch()`: lightness 0–100, chroma from 0, and 100% of chroma is 150.
 fn parse_lch(cursor : Cursor) -> Color raise Refused {
-  let lightness = parse_term(cursor)
-  let chroma = parse_term_after_space(cursor)
-  let hue = parse_term_after_space(cursor)
+  let lightness = parse_component(cursor, Light(100.0))
+  let chroma = parse_component_after_space(cursor, Scaled(150.0))
+  let hue = parse_component_after_space(cursor, Hue)
   let alpha = parse_alpha(cursor)
-  let chroma = chroma.scaled(150.0)
-  Color::lch(
-    clamp01(lightness.scaled(100.0) / 100.0) * 100.0,
-    if chroma.is_nan() {
-      chroma
-    } else if chroma < 0.0 {
-      0.0
-    } else {
-      chroma
-    },
-    hue.hue(),
-    alpha~,
-  )
+  Color::lch(lightness, non_negative(chroma), hue, alpha~)
 }
 
 ///|
 /// `oklab()`: lightness 0–1, and 100% of `a` and `b` is 0.4.
 fn parse_oklab(cursor : Cursor) -> Color raise Refused {
-  let lightness = parse_term(cursor)
-  let a = parse_term_after_space(cursor)
-  let b = parse_term_after_space(cursor)
+  let lightness = parse_component(cursor, Light(1.0))
+  let a = parse_component_after_space(cursor, Scaled(0.4))
+  let b = parse_component_after_space(cursor, Scaled(0.4))
   let alpha = parse_alpha(cursor)
-  Color::oklab(
-    clamp01(lightness.fraction()),
-    a.scaled(0.4),
-    b.scaled(0.4),
-    alpha~,
-  )
+  Color::oklab(lightness, a, b, alpha~)
 }
 
 ///|
 /// `oklch()`: lightness 0–1, chroma from 0, and 100% of chroma is 0.4.
 fn parse_oklch(cursor : Cursor) -> Color raise Refused {
-  let lightness = parse_term(cursor)
-  let chroma = parse_term_after_space(cursor)
-  let hue = parse_term_after_space(cursor)
+  let lightness = parse_component(cursor, Light(1.0))
+  let chroma = parse_component_after_space(cursor, Scaled(0.4))
+  let hue = parse_component_after_space(cursor, Hue)
   let alpha = parse_alpha(cursor)
-  Color::oklch(
-    clamp01(lightness.fraction()),
-    non_negative(chroma.scaled(0.4)),
-    hue.hue(),
-    alpha~,
-  )
+  Color::oklch(lightness, non_negative(chroma), hue, alpha~)
 }
 
 ///|
@@ -685,27 +652,22 @@ fn parse_color_function(cursor : Cursor) -> Color raise Refused {
   if !is_name_start(cursor.peek()) {
     raise cursor.unexpected("a colour space")
   }
+  let start = cursor.at
   let name = cursor.ident()
   let space = match Space::of(name) {
     Some(space) =>
       if space.is_predefined() {
         space
       } else {
-        raise cursor.unknown(name.to_owned())
+        raise Unknown(at=start, got=name.to_owned())
       }
-    None => raise cursor.unknown(name.to_owned())
+    None => raise Unknown(at=start, got=name.to_owned())
   }
-  let first = parse_term_after_space(cursor)
-  let second = parse_term_after_space(cursor)
-  let third = parse_term_after_space(cursor)
+  let first = parse_component_after_space(cursor, Fraction)
+  let second = parse_component_after_space(cursor, Fraction)
+  let third = parse_component_after_space(cursor, Fraction)
   let alpha = parse_alpha(cursor)
-  Color::of(
-    space,
-    first.fraction(),
-    second.fraction(),
-    third.fraction(),
-    alpha~,
-  )
+  Color::of(space, first, second, third, alpha~)
 }
 
 ///|

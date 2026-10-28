@@ -175,6 +175,38 @@ test "color() takes every space it names, and xyz means xyz-d65" {
 }
 
 ///|
+/// An angle belongs in a hue and nowhere else. A reader that took `rgb(1 2 3deg)`
+/// as `rgb(1 2 3)` would be inventing a number the author did not write.
+test "an angle is refused where only a number belongs" {
+  for
+    text in [
+      "rgb(1 2 3deg)", "rgb(1deg 2 3)", "hwb(0 10 10deg)", "lab(50 20 30deg)", "lch(50 20deg 30)",
+      "oklab(0.5 0.1 0.2rad)", "color(srgb 0 0 0deg)", "hsl(120 50% 50deg)", "hsl(50% 50% 50%)",
+    ] {
+    assert_true(@moonrgba.Color::decode_opt(text) is None, msg=text)
+  }
+  // A hue may be an angle in any unit, and a number of degrees is an angle.
+  assert_true(near(read("oklch(0.5 0.1 0.5turn)").hue(), 180.0, 1.0e-12))
+  assert_true(near(read("hsl(120deg 50% 50%)").hue(), 120.0, 1.0e-12))
+}
+
+///|
+/// In the modern syntax a number and a percentage may sit side by side, and each
+/// means what its own kind says.
+test "a modern argument list may mix numbers and percentages" {
+  assert_true(
+    near_components(
+      read("rgb(1 2 50%)"),
+      (1.0 / 255.0, 2.0 / 255.0, 0.5),
+      1.0e-12,
+    ),
+  )
+  assert_true(
+    near_components(read("rgb(10% 20 30%)"), (0.1, 20.0 / 255.0, 0.3), 1.0e-12),
+  )
+}
+
+///|
 /// CSS strips comments before it reads a value, so a comment may sit anywhere
 /// whitespace may, including inside a number's place.
 test "comments count as whitespace" {

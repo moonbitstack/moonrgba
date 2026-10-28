@@ -143,6 +143,41 @@ test "a polar space is one whose hue is an angle" {
 }
 
 ///|
+/// The luma coefficients are the standard's, and a full red is the value both
+/// BT.601 and BT.709 give it: luma is the red coefficient, and the red
+/// difference is a half, because `R − Y` is `1 − Kʳ` and the divisor is twice
+/// that.
+test "YCbCr gives a red the numbers the standards give it" {
+  let red = @moonrgba.Color::rgb(255, 0, 0)
+  // The components are luma, blue difference, red difference, in that order.
+  let bt709 = red.to_ycbcr(luma=@moonrgba.Luma::Bt709)
+  assert_true(near(bt709.x, 0.2126, 1.0e-12), msg="\{bt709.x}")
+  assert_true(near(bt709.y, -0.11457210605733965, 1.0e-12), msg="\{bt709.y}")
+  assert_true(near(bt709.z, 0.5, 1.0e-12), msg="\{bt709.z}")
+  let bt601 = red.to_ycbcr(luma=@moonrgba.Luma::Bt601)
+  assert_true(near(bt601.x, 0.299, 1.0e-12), msg="\{bt601.x}")
+  assert_true(near(bt601.y, -0.1687358916, 1.0e-9), msg="\{bt601.y}")
+  assert_true(near(bt601.z, 0.5, 1.0e-12), msg="\{bt601.z}")
+  let bt2020 = red.to_ycbcr(luma=@moonrgba.Luma::Bt2020)
+  assert_true(near(bt2020.x, 0.2627, 1.0e-12), msg="\{bt2020.x}")
+  // White has luma one and no chroma, whichever coefficients are used.
+  for
+    luma in [
+      @moonrgba.Luma::Bt601,
+      @moonrgba.Luma::Bt709,
+      @moonrgba.Luma::Bt2020,
+    ] {
+    let white = @moonrgba.Color::white().to_ycbcr(luma~)
+    assert_true(near(white.x, 1.0, 1.0e-12), msg="\{white.x}")
+    assert_true(near(white.y, 0.0, 1.0e-12), msg="\{white.y}")
+    assert_true(near(white.z, 0.0, 1.0e-12), msg="\{white.z}")
+  }
+  // And it comes back exactly, coefficients and all.
+  let round_trip = bt709.to_srgb()
+  assert_true(near_components(round_trip, (1.0, 0.0, 0.0), 1.0e-12))
+}
+
+///|
 /// CMYK is four inks in a colour type that holds three components, so it is a
 /// type of its own. Four inks do not fit in three channels and `to_cmyk` has to
 /// choose which of the many ink combinations to return, so what round-trips is
