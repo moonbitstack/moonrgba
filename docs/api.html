@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API · moonrgba</title>
+<meta name="description" content="Every public type and function of moonrgba, with the signature it has and what it is for.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="site wrap">
+  <a class="brand" href="./"><b>moonrgba</b><small>colour for MoonBit</small></a>
+  <nav class="top">
+    <a href="guide.html">Guide</a>
+    <a href="api.html" aria-current="page">API</a>
+    <a href="gamut.html">Gamut</a>
+    <a class="gh" href="https://github.com/moonbitstack/moonrgba" aria-label="Source on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <div class="doc-head">
+    <p class="eyebrow">Reference</p>
+    <h1>Everything that is public.</h1>
+    <p class="lede">One package, one import: <code>moonbitstack/moonrgba</code>. Each entry
+      below is a signature and the reason it is that shape. The signatures are the ones in
+      the interface file; the words are the ones beside the code.</p>
+    <p class="doc-meta"><span>82 entries</span><span>1 package</span><span>Apache-2.0</span></p>
+  </div>
+
+  <div class="doc-body">
+
+    <article class="prose reference">
+<section class="band" id="band-types">
+<div class="band-head">
+<h2>Types</h2>
+<span class="count">10</span>
+</div>
+<p>The values a colour is made of, and the other types the functions return.</p>
+<div class="jump">
+<a href="#Color">Color</a>
+<a href="#Space">Space</a>
+<a href="#Format">Format</a>
+<a href="#Delta">Delta</a>
+<a href="#Hue">Hue</a>
+<a href="#Luma">Luma</a>
+<a href="#Cmyk">Cmyk</a>
+<a href="#Ansi16">Ansi16</a>
+<a href="#Ansi256">Ansi256</a>
+<a href="#Refused">Refused</a>
+</div>
+<div class="entry" id="Color">
+<h3><span class="kind">struct</span>Color</h3>
+<pre class="sig">pub(all) struct Color</pre>
+<p>A colour: three components in a named space, and an alpha.</p>
+<p>Alpha is kept apart from the components because it is not a colour: it says how much of what is behind shows through, and it survives a change of space untouched.</p>
+<p>A component may be <code>none</code>, which CSS writes as the <code>none</code> keyword and which this library carries as a NaN — "this space did not say", which interpolation then fills in from the other side. Ordinary arithmetic on such a component gives NaN back, which is the honest answer.</p>
+<ul class="variants"><li>space : Space</li><li>x : Double</li><li>y : Double</li><li>z : Double</li><li>alpha : Double</li></ul>
+</div>
+<div class="entry" id="Space">
+<h3><span class="kind">enum</span>Space</h3>
+<pre class="sig">pub(all) enum Space</pre>
+<p>The space a colour's three components are read in.</p>
+<div class="table-wrap"><table class="doc-table"><thead><tr><th><code>space</code></th><th><code>x</code></th><th><code>y</code></th><th><code>z</code></th></tr></thead><tbody><tr><td><code>Srgb</code>, <code>SrgbLinear</code>, <code>DisplayP3</code>, <code>Rec2020</code>, <code>A98Rgb</code>, <code>ProPhoto</code></td><td>red</td><td>green</td><td>blue</td></tr><tr><td><code>Hsl</code></td><td>hue, degrees</td><td>saturation</td><td>lightness</td></tr><tr><td><code>Hsv</code></td><td>hue, degrees</td><td>saturation</td><td>value</td></tr><tr><td><code>Hwb</code></td><td>hue, degrees</td><td>whiteness</td><td>blackness</td></tr><tr><td><code>Lab</code></td><td>lightness, 0–100</td><td>a</td><td>b</td></tr><tr><td><code>Lch</code></td><td>lightness, 0–100</td><td>chroma</td><td>hue, degrees</td></tr><tr><td><code>Oklab</code></td><td>lightness, 0–1</td><td>a</td><td>b</td></tr><tr><td><code>Oklch</code></td><td>lightness, 0–1</td><td>chroma</td><td>hue, degrees</td></tr><tr><td><code>XyzD50</code>, <code>XyzD65</code></td><td>X</td><td>Y</td><td>Z</td></tr><tr><td><code>YCbCr</code></td><td>luma</td><td>blue difference</td><td>red difference</td></tr><tr><td><code>Current</code></td><td>—</td><td>—</td><td>—</td></tr></tbody></table></div>
+<p>Component ranges are the ones the format itself uses, not a common scale: <code>Lab</code> lightness is 0–100 because that is what <code>lab()</code> writes, while <code>Oklab</code> lightness is 0–1 because that is what <code>oklab()</code> writes. A colour out of its space's range is still a valid value — CSS Color 4 lets a colour be outside its gamut and leaves clipping to the moment it is painted.</p>
+<ul class="variants"><li>Srgb<small>Gamma-encoded sRGB, components 0–1. The one space every screen has.</small></li><li>SrgbLinear<small>Linear-light sRGB, components 0–1: sRGB without the transfer curve.</small></li><li>Hsl<small>Hue in degrees, saturation and lightness 0–1.</small></li><li>Hsv<small>Hue in degrees, saturation and value 0–1. No CSS syntax of its own.</small></li><li>Hwb<small>Hue in degrees, whiteness and blackness 0–1.</small></li><li>Lab<small>CIE Lab, D50. Lightness 0–100, a and b roughly ±125.</small></li><li>Lch<small>CIE LCh, D50: Lab in polar form, hue in degrees.</small></li><li>Oklab<small>Oklab. Lightness 0–1, a and b roughly ±0.4.</small></li><li>Oklch<small>OkLCh: Oklab in polar form, hue in degrees.</small></li><li>XyzD50<small>CIE XYZ relative to D50, Y = 1 for white.</small></li><li>XyzD65<small>CIE XYZ relative to D65, Y = 1 for white. What <code>color(xyz ...)</code> writes.</small></li><li>DisplayP3<small>Display P3, components 0–1, sRGB's transfer curve with wider primaries.</small></li><li>DisplayP3Linear<small>Linear-light Display P3: P3 without the transfer curve.</small></li><li>Rec2020<small>Rec. 2020, components 0–1.</small></li><li>A98Rgb<small>Adobe RGB (1998), components 0–1.</small></li><li>ProPhoto<small>ProPhoto RGB, components 0–1, D50 white.</small></li><li>YCbCr(Luma)<small>A luma/chroma pair as BT.601, BT.709 or BT.2020 define it. Luma 0–1, chroma −0.5–0.5. No CSS syntax.</small></li><li>Current<small>Not a space: the <code>currentcolor</code> keyword, which stands for whatever colour the element it is painted on already has. Carried in a <code>Color</code> so that a declaration can be read and written back unchanged; resolve it before converting, with <code>Color::resolve</code>.</small></li></ul>
+<div class="member">
+<h4>Space::code</h4>
+<pre class="sig">pub fn Space::code(self : Space) -&gt; String</pre>
+<p>The identifier this space is written with in CSS, or the one this library uses where CSS has no syntax for it.</p>
+</div>
+<div class="member">
+<h4>Space::has_gamut</h4>
+<pre class="sig">pub fn Space::has_gamut(self : Space) -&gt; Bool</pre>
+<p>Whether a space has a bounded gamut at all. XYZ and the polar spaces do not: every triple is a colour, and only the RGB spaces say which ones a display can show.</p>
+</div>
+<div class="member">
+<h4>Space::is_polar</h4>
+<pre class="sig">pub fn Space::is_polar(self : Space) -&gt; Bool</pre>
+<p>Whether the space writes a hue in its third component (<code>Hsl</code>, <code>Hsv</code>, <code>Hwb</code>) or in its third of a polar pair (<code>Lch</code>, <code>Oklch</code>).</p>
+</div>
+<div class="member">
+<h4>Space::is_predefined</h4>
+<pre class="sig">pub fn Space::is_predefined(self : Space) -&gt; Bool</pre>
+<p>Whether this space can be written inside CSS's <code>color()</code>.</p>
+</div>
+<div class="member">
+<h4>Space::of</h4>
+<pre class="sig">pub fn Space::of(code : StringView) -&gt; Space?</pre>
+<p>The space an identifier names, if any.</p>
+</div>
+</div>
+<div class="entry" id="Format">
+<h3><span class="kind">enum</span>Format</h3>
+<pre class="sig">pub(all) enum Format</pre>
+<p>How to write a colour out.</p>
+<ul class="variants"><li>Shortest<small>The shortest spelling the colour's own space allows, falling back to sRGB for the spaces CSS has no syntax for.</small></li><li>Hex<small><code>#rgb</code>, <code>#rgba</code>, <code>#rrggbb</code> or <code>#rrggbbaa</code>, whichever is shortest and exact. Always sRGB, so a colour in another space is converted and may be clipped.</small></li><li>Rgb<small><code>rgb(0 0 0)</code> or <code>rgb(0 0 0 / 0.5)</code>, always sRGB.</small></li><li>Hsl<small><code>hsl(0 0% 0%)</code>.</small></li><li>Hwb<small><code>hwb(0 0% 0%)</code>.</small></li><li>Lab<small><code>lab(0 0 0)</code>.</small></li><li>Lch<small><code>lch(0 0 0)</code>.</small></li><li>Oklab<small><code>oklab(0 0 0)</code>.</small></li><li>Oklch<small><code>oklch(0 0 0)</code>.</small></li><li>Color<small><code>color(srgb 0 0 0)</code> and the rest of the spaces <code>color()</code> takes. A space it cannot name is written in its own syntax instead.</small></li><li>Named<small>The name the colour has, or the same string <code>Hex</code> would give.</small></li></ul>
+</div>
+<div class="entry" id="Delta">
+<h3><span class="kind">enum</span>Delta</h3>
+<pre class="sig">pub(all) enum Delta</pre>
+<p>Which colour difference to measure. The name is the question, not the space: three of these are computed in Lab and one in Oklab.</p>
+<ul class="variants"><li>E76<small>CIE76: the Euclidean distance in Lab, which is 1976's answer.</small></li><li>E94<small>CIE94, with the graphic-arts weights: 1 for lightness, 1 for chroma, 1 for hue. The textile weights (2, 1, 1) are a different question.</small></li><li>E2000<small>CIEDE2000, the current CIE recommendation, with all three weights at 1.</small></li><li>Ok<small>The Euclidean distance in Oklab, which needs no weights to be even.</small></li></ul>
+</div>
+<div class="entry" id="Hue">
+<h3><span class="kind">enum</span>Hue</h3>
+<pre class="sig">pub(all) enum Hue</pre>
+<p>Which way round the hue circle an interpolation travels.</p>
+<ul class="variants"><li>Shorter<small>The way that is at most half a turn: 350° to 10° goes through 0°.</small></li><li>Longer<small>The way that is at least half a turn.</small></li><li>Increasing<small>Always increasing, so 350° to 10° goes through 360°.</small></li><li>Decreasing<small>Always decreasing.</small></li></ul>
+</div>
+<div class="entry" id="Luma">
+<h3><span class="kind">enum</span>Luma</h3>
+<pre class="sig">pub(all) enum Luma</pre>
+<p>Which luma coefficients a <code>YCbCr</code> colour uses.</p>
+<p>The three differ only in how much of each primary counts as brightness, and a value converted with the wrong one is visibly off, so the choice is part of the value rather than a global setting.</p>
+<ul class="variants"><li>Bt601<small>BT.601: the coefficients of SD television.</small></li><li>Bt709<small>BT.709: the coefficients of HD television, and of sRGB in practice.</small></li><li>Bt2020<small>BT.2020: the coefficients of UHD television, on wider primaries.</small></li></ul>
+</div>
+<div class="entry" id="Cmyk">
+<h3><span class="kind">struct</span>Cmyk</h3>
+<pre class="sig">pub(all) struct Cmyk</pre>
+<p>CMYK for print, as four inks in 0–1.</p>
+<p>The conversion is the arithmetic one — full black is all key, and the other three inks spread what is left — not the one an ICC profile for a particular press and paper would give.</p>
+<p>Four inks do not fit in three channels, so the arithmetic has to choose: for one colour there are many ink combinations, and <code>to_cmyk</code> returns the one with as much key as possible, which is the usual choice because key ink is cheap and the three colour inks are not. That means a colour survives the round trip but its inks may not: <code>cmyk(0.2 0.4 0.6 0.1)</code> prints the same colour as <code>cmyk(0 0.25 0.5 0.28)</code>, and only the second comes back.</p>
+<ul class="variants"><li>c : Double</li><li>m : Double</li><li>y : Double</li><li>k : Double</li></ul>
+<div class="member">
+<h4>Cmyk::of</h4>
+<pre class="sig">pub fn Cmyk::of(c : Double, m : Double, y : Double, k : Double) -&gt; Cmyk</pre>
+<p>Four inks. Nothing is clamped here: an ink of 1.2 is a number no press can lay down, and deciding that is the printer's business rather than the type's. <code>to_color</code> clamps on the way back out, so the arithmetic stays total.</p>
+</div>
+<div class="member">
+<h4>Cmyk::to_color</h4>
+<pre class="sig">pub fn Cmyk::to_color(self : Cmyk, alpha? : Double) -&gt; Color</pre>
+<p>A colour from CMYK inks, in sRGB.</p>
+</div>
+</div>
+<div class="entry" id="Ansi16">
+<h3><span class="kind">enum</span>Ansi16</h3>
+<pre class="sig">pub(all) enum Ansi16</pre>
+<p>The sixteen colours a terminal names, in the order their escape sequences number them.</p>
+<ul class="variants"><li>Black</li><li>Red</li><li>Green</li><li>Yellow</li><li>Blue</li><li>Magenta</li><li>Cyan</li><li>White</li><li>BrightBlack</li><li>BrightRed</li><li>BrightGreen</li><li>BrightYellow</li><li>BrightBlue</li><li>BrightMagenta</li><li>BrightCyan</li><li>BrightWhite</li></ul>
+<div class="member">
+<h4>Ansi16::code</h4>
+<pre class="sig">pub fn Ansi16::code(self : Ansi16) -&gt; Int32</pre>
+<p>Where a named colour sits in the palette, which is also the low nibble of the escape sequence that selects it.</p>
+</div>
+<div class="member">
+<h4>Ansi16::color</h4>
+<pre class="sig">pub fn Ansi16::color(self : Ansi16) -&gt; Color</pre>
+<p>The sRGB colour of a named slot: xterm's defaults.</p>
+</div>
+<div class="member">
+<h4>Ansi16::of</h4>
+<pre class="sig">pub fn Ansi16::of(code : Int32) -&gt; Ansi16?</pre>
+<p>The colour a palette slot stands for, if the number names one.</p>
+</div>
+</div>
+<div class="entry" id="Ansi256">
+<h3><span class="kind">struct</span>Ansi256</h3>
+<pre class="sig">pub(all) struct Ansi256</pre>
+<p>A slot in the 256-colour palette: 0–15 are the named colours, 16–231 a 6×6×6 cube, and 232–255 a grey ramp.</p>
+<ul class="variants"><li>code : Int32<small>0–255. Kept in range by <code>Ansi256::of</code>; written by hand it is a number a terminal would mask, so nothing here trusts it to be inside.</small></li></ul>
+<div class="member">
+<h4>Ansi256::code</h4>
+<pre class="sig">pub fn Ansi256::code(self : Ansi256) -&gt; Int32</pre>
+<p>The number to put in an escape sequence.</p>
+</div>
+<div class="member">
+<h4>Ansi256::color</h4>
+<pre class="sig">pub fn Ansi256::color(self : Ansi256) -&gt; Color</pre>
+<p>The colour a slot stands for.</p>
+</div>
+<div class="member">
+<h4>Ansi256::of</h4>
+<pre class="sig">pub fn Ansi256::of(code : Int32) -&gt; Ansi256</pre>
+<p>The palette slot with this number. Numbers outside 0–255 are clamped rather than wrapped, so that an out-of-range number lands on the nearest end rather than on a colour that is nothing like it.</p>
+</div>
+</div>
+<div class="entry" id="Refused">
+<h3><span class="kind">suberror</span>Refused</h3>
+<pre class="sig">pub(all) suberror Refused</pre>
+<p>Why a string is not a CSS colour.</p>
+<ul class="variants"><li>Unexpected(at~ : Int32, got~ : String, want~ : String)<small>The text did not continue the way the syntax required, at this offset.</small></li><li>Unknown(at~ : Int32, got~ : String)<small>A function or keyword that is valid CSS but not a colour this library knows, at this offset.</small></li></ul>
+</div>
+</section>
+<section class="band" id="band-make">
+<div class="band-head">
+<h2>Making a colour</h2>
+<span class="count">22</span>
+</div>
+<p>One constructor per space, each taking that space's own units. The colour stays in the space it was made in, so it is written back in that space.</p>
+<div class="jump">
+<a href="#Color-black">Color::black</a>
+<a href="#Color-white">Color::white</a>
+<a href="#Color-transparent">Color::transparent</a>
+<a href="#Color-current">Color::current</a>
+<a href="#Color-rgb">Color::rgb</a>
+<a href="#Color-srgb">Color::srgb</a>
+<a href="#Color-srgb_linear">Color::srgb_linear</a>
+<a href="#Color-hsl">Color::hsl</a>
+<a href="#Color-hsv">Color::hsv</a>
+<a href="#Color-hwb">Color::hwb</a>
+<a href="#Color-lab">Color::lab</a>
+<a href="#Color-lch">Color::lch</a>
+<a href="#Color-oklab">Color::oklab</a>
+<a href="#Color-oklch">Color::oklch</a>
+<a href="#Color-display_p3">Color::display_p3</a>
+<a href="#Color-rec2020">Color::rec2020</a>
+<a href="#Color-a98_rgb">Color::a98_rgb</a>
+<a href="#Color-prophoto">Color::prophoto</a>
+<a href="#Color-xyz_d50">Color::xyz_d50</a>
+<a href="#Color-xyz_d65">Color::xyz_d65</a>
+<a href="#Color-ycbcr">Color::ycbcr</a>
+<a href="#Color-of">Color::of</a>
+</div>
+<div class="entry" id="Color-black">
+<h3><span class="kind">method</span>Color::black</h3>
+<pre class="sig">pub fn Color::black() -&gt; Color</pre>
+<p>Black in sRGB.</p>
+</div>
+<div class="entry" id="Color-white">
+<h3><span class="kind">method</span>Color::white</h3>
+<pre class="sig">pub fn Color::white() -&gt; Color</pre>
+<p>White in sRGB.</p>
+</div>
+<div class="entry" id="Color-transparent">
+<h3><span class="kind">method</span>Color::transparent</h3>
+<pre class="sig">pub fn Color::transparent() -&gt; Color</pre>
+<p><code>transparent</code>: black with no alpha at all. Not a space of its own, because what shows through is decided by the backdrop, not by the colour.</p>
+</div>
+<div class="entry" id="Color-current">
+<h3><span class="kind">method</span>Color::current</h3>
+<pre class="sig">pub fn Color::current() -&gt; Color</pre>
+<p>The <code>currentcolor</code> keyword.</p>
+</div>
+<div class="entry" id="Color-rgb">
+<h3><span class="kind">method</span>Color::rgb</h3>
+<pre class="sig">pub fn Color::rgb( red : Int32, green : Int32, blue : Int32, alpha? : Double, ) -&gt; Color</pre>
+<p>sRGB from bytes, 0–255, which is how a colour usually arrives from a file, a theme or a terminal.</p>
+</div>
+<div class="entry" id="Color-srgb">
+<h3><span class="kind">method</span>Color::srgb</h3>
+<pre class="sig">pub fn Color::srgb( r : Double, g : Double, b : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>sRGB from components in 0–1.</p>
+</div>
+<div class="entry" id="Color-srgb_linear">
+<h3><span class="kind">method</span>Color::srgb_linear</h3>
+<pre class="sig">pub fn Color::srgb_linear( r : Double, g : Double, b : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>Linear-light sRGB from components in 0–1.</p>
+</div>
+<div class="entry" id="Color-hsl">
+<h3><span class="kind">method</span>Color::hsl</h3>
+<pre class="sig">pub fn Color::hsl(h : Double, s : Double, l : Double, alpha? : Double) -&gt; Color</pre>
+<p>HSL: hue in degrees, saturation and lightness in 0–1.</p>
+</div>
+<div class="entry" id="Color-hsv">
+<h3><span class="kind">method</span>Color::hsv</h3>
+<pre class="sig">pub fn Color::hsv(h : Double, s : Double, v : Double, alpha? : Double) -&gt; Color</pre>
+<p>HSV: hue in degrees, saturation and value in 0–1.</p>
+</div>
+<div class="entry" id="Color-hwb">
+<h3><span class="kind">method</span>Color::hwb</h3>
+<pre class="sig">pub fn Color::hwb(h : Double, w : Double, b : Double, alpha? : Double) -&gt; Color</pre>
+<p>HWB: hue in degrees, whiteness and blackness in 0–1.</p>
+</div>
+<div class="entry" id="Color-lab">
+<h3><span class="kind">method</span>Color::lab</h3>
+<pre class="sig">pub fn Color::lab(l : Double, a : Double, b : Double, alpha? : Double) -&gt; Color</pre>
+<p>CIE Lab with a D50 white: lightness 0–100.</p>
+</div>
+<div class="entry" id="Color-lch">
+<h3><span class="kind">method</span>Color::lch</h3>
+<pre class="sig">pub fn Color::lch(l : Double, c : Double, h : Double, alpha? : Double) -&gt; Color</pre>
+<p>CIE LCh with a D50 white: lightness 0–100, hue in degrees.</p>
+</div>
+<div class="entry" id="Color-oklab">
+<h3><span class="kind">method</span>Color::oklab</h3>
+<pre class="sig">pub fn Color::oklab( l : Double, a : Double, b : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>Oklab: lightness 0–1.</p>
+</div>
+<div class="entry" id="Color-oklch">
+<h3><span class="kind">method</span>Color::oklch</h3>
+<pre class="sig">pub fn Color::oklch( l : Double, c : Double, h : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>OkLCh: lightness 0–1, hue in degrees.</p>
+</div>
+<div class="entry" id="Color-display_p3">
+<h3><span class="kind">method</span>Color::display_p3</h3>
+<pre class="sig">pub fn Color::display_p3( r : Double, g : Double, b : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>Display P3, components in 0–1.</p>
+</div>
+<div class="entry" id="Color-rec2020">
+<h3><span class="kind">method</span>Color::rec2020</h3>
+<pre class="sig">pub fn Color::rec2020( r : Double, g : Double, b : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>Rec. 2020, components in 0–1.</p>
+</div>
+<div class="entry" id="Color-a98_rgb">
+<h3><span class="kind">method</span>Color::a98_rgb</h3>
+<pre class="sig">pub fn Color::a98_rgb( r : Double, g : Double, b : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>Adobe RGB (1998), components in 0–1.</p>
+</div>
+<div class="entry" id="Color-prophoto">
+<h3><span class="kind">method</span>Color::prophoto</h3>
+<pre class="sig">pub fn Color::prophoto( r : Double, g : Double, b : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>ProPhoto RGB, components in 0–1, D50 white.</p>
+</div>
+<div class="entry" id="Color-xyz_d50">
+<h3><span class="kind">method</span>Color::xyz_d50</h3>
+<pre class="sig">pub fn Color::xyz_d50( x : Double, y : Double, z : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>CIE XYZ relative to D50, Y = 1 for white.</p>
+</div>
+<div class="entry" id="Color-xyz_d65">
+<h3><span class="kind">method</span>Color::xyz_d65</h3>
+<pre class="sig">pub fn Color::xyz_d65( x : Double, y : Double, z : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>CIE XYZ relative to D65, Y = 1 for white.</p>
+</div>
+<div class="entry" id="Color-ycbcr">
+<h3><span class="kind">method</span>Color::ycbcr</h3>
+<pre class="sig">pub fn Color::ycbcr( y : Double, cb : Double, cr : Double, luma? : Luma, alpha? : Double, ) -&gt; Color</pre>
+<p>YCbCr: luma in 0–1, chroma in −0.5–0.5.</p>
+</div>
+<div class="entry" id="Color-of">
+<h3><span class="kind">method</span>Color::of</h3>
+<pre class="sig">pub fn Color::of( space : Space, x : Double, y : Double, z : Double, alpha? : Double, ) -&gt; Color</pre>
+<p>A colour in any space, from components already in that space's own units.</p>
+<p>The named constructors below cover the common spaces; this one is for the rest, and for code that picks a space at run time.</p>
+</div>
+</section>
+<section class="band" id="band-read">
+<div class="band-head">
+<h2>Reading and writing</h2>
+<span class="count">5</span>
+</div>
+<p>CSS in, CSS out, and the name table in both directions.</p>
+<div class="jump">
+<a href="#Color-decode">Color::decode</a>
+<a href="#Color-decode_opt">Color::decode_opt</a>
+<a href="#Color-encode">Color::encode</a>
+<a href="#Color-of_name">Color::of_name</a>
+<a href="#Color-name">Color::name</a>
+</div>
+<div class="entry" id="Color-decode">
+<h3><span class="kind">method</span>Color::decode</h3>
+<pre class="sig">pub fn Color::decode(text : StringView) -&gt; Color raise Refused</pre>
+<p>A <code>&lt;color&gt;</code>: everything from the first non-blank to the closing bracket.</p>
+</div>
+<div class="entry" id="Color-decode_opt">
+<h3><span class="kind">method</span>Color::decode_opt</h3>
+<pre class="sig">pub fn Color::decode_opt(text : StringView) -&gt; Color?</pre>
+<p>Read a colour, or <code>None</code> where the text is not one.</p>
+</div>
+<div class="entry" id="Color-encode">
+<h3><span class="kind">method</span>Color::encode</h3>
+<pre class="sig">pub fn Color::encode(self : Color, format? : Format) -&gt; String</pre>
+<p>A colour as CSS, in the shortest spelling that reads back as the same colour.</p>
+<p>Without a format the colour stays in the space it is in, which matters: an OkLCh colour written through sRGB would be clipped to a gamut it never asked for. The spaces CSS cannot spell — HSV, YCbCr — go out as sRGB, and the unresolved <code>currentcolor</code> goes out as itself.</p>
+</div>
+<div class="entry" id="Color-of_name">
+<h3><span class="kind">method</span>Color::of_name</h3>
+<pre class="sig">pub fn Color::of_name(name : StringView) -&gt; Color?</pre>
+<p>The colour a CSS keyword names, or <code>None</code> if it names nothing.</p>
+<p><code>transparent</code> and <code>currentcolor</code> are not here: one is a colour with no alpha and the other is not a colour yet, and both are handled where a declaration is read rather than in the table of names.</p>
+</div>
+<div class="entry" id="Color-name">
+<h3><span class="kind">method</span>Color::name</h3>
+<pre class="sig">pub fn Color::name(self : Color) -&gt; String?</pre>
+<p>The name this colour has, if it has one, and the shortest such name where several do: <code>aqua</code> and <code>cyan</code> are the same colour, and four letters beat four letters only by coming first in the table.</p>
+<p>A colour that is not one of the 148 opaque names has no name, however close it looks: a name is a spelling, not an approximation.</p>
+</div>
+</section>
+<section class="band" id="band-convert">
+<div class="band-head">
+<h2>Converting</h2>
+<span class="count">18</span>
+</div>
+<p>One method per destination space, and <code>to_space</code> for a space known only at run time. A conversion is exact in both directions.</p>
+<div class="jump">
+<a href="#Color-to_srgb">Color::to_srgb</a>
+<a href="#Color-to_srgb_linear">Color::to_srgb_linear</a>
+<a href="#Color-to_hsl">Color::to_hsl</a>
+<a href="#Color-to_hsv">Color::to_hsv</a>
+<a href="#Color-to_hwb">Color::to_hwb</a>
+<a href="#Color-to_oklab">Color::to_oklab</a>
+<a href="#Color-to_oklch">Color::to_oklch</a>
+<a href="#Color-to_lab">Color::to_lab</a>
+<a href="#Color-to_lch">Color::to_lch</a>
+<a href="#Color-to_xyz_d65">Color::to_xyz_d65</a>
+<a href="#Color-to_xyz_d50">Color::to_xyz_d50</a>
+<a href="#Color-to_display_p3">Color::to_display_p3</a>
+<a href="#Color-to_rec2020">Color::to_rec2020</a>
+<a href="#Color-to_a98_rgb">Color::to_a98_rgb</a>
+<a href="#Color-to_prophoto">Color::to_prophoto</a>
+<a href="#Color-to_cmyk">Color::to_cmyk</a>
+<a href="#Color-to_ycbcr">Color::to_ycbcr</a>
+<a href="#Color-to_space">Color::to_space</a>
+</div>
+<div class="entry" id="Color-to_srgb">
+<h3><span class="kind">method</span>Color::to_srgb</h3>
+<pre class="sig">pub fn Color::to_srgb(self : Color) -&gt; Color</pre>
+<p>sRGB, components 0–1.</p>
+</div>
+<div class="entry" id="Color-to_srgb_linear">
+<h3><span class="kind">method</span>Color::to_srgb_linear</h3>
+<pre class="sig">pub fn Color::to_srgb_linear(self : Color) -&gt; Color</pre>
+<p>Linear-light sRGB, components 0–1.</p>
+</div>
+<div class="entry" id="Color-to_hsl">
+<h3><span class="kind">method</span>Color::to_hsl</h3>
+<pre class="sig">pub fn Color::to_hsl(self : Color) -&gt; Color</pre>
+<p>HSL: hue in degrees, saturation and lightness 0–1.</p>
+</div>
+<div class="entry" id="Color-to_hsv">
+<h3><span class="kind">method</span>Color::to_hsv</h3>
+<pre class="sig">pub fn Color::to_hsv(self : Color) -&gt; Color</pre>
+<p>HSV: hue in degrees, saturation and value 0–1.</p>
+</div>
+<div class="entry" id="Color-to_hwb">
+<h3><span class="kind">method</span>Color::to_hwb</h3>
+<pre class="sig">pub fn Color::to_hwb(self : Color) -&gt; Color</pre>
+<p>HWB: hue in degrees, whiteness and blackness 0–1.</p>
+</div>
+<div class="entry" id="Color-to_oklab">
+<h3><span class="kind">method</span>Color::to_oklab</h3>
+<pre class="sig">pub fn Color::to_oklab(self : Color) -&gt; Color</pre>
+<p>Oklab, lightness 0–1.</p>
+</div>
+<div class="entry" id="Color-to_oklch">
+<h3><span class="kind">method</span>Color::to_oklch</h3>
+<pre class="sig">pub fn Color::to_oklch(self : Color) -&gt; Color</pre>
+<p>OkLCh, lightness 0–1.</p>
+</div>
+<div class="entry" id="Color-to_lab">
+<h3><span class="kind">method</span>Color::to_lab</h3>
+<pre class="sig">pub fn Color::to_lab(self : Color) -&gt; Color</pre>
+<p>CIE Lab relative to D50, lightness 0–100.</p>
+</div>
+<div class="entry" id="Color-to_lch">
+<h3><span class="kind">method</span>Color::to_lch</h3>
+<pre class="sig">pub fn Color::to_lch(self : Color) -&gt; Color</pre>
+<p>CIE LCh relative to D50, lightness 0–100.</p>
+</div>
+<div class="entry" id="Color-to_xyz_d65">
+<h3><span class="kind">method</span>Color::to_xyz_d65</h3>
+<pre class="sig">pub fn Color::to_xyz_d65(self : Color) -&gt; Color</pre>
+<p>CIE XYZ relative to D65, Y = 1 for white.</p>
+</div>
+<div class="entry" id="Color-to_xyz_d50">
+<h3><span class="kind">method</span>Color::to_xyz_d50</h3>
+<pre class="sig">pub fn Color::to_xyz_d50(self : Color) -&gt; Color</pre>
+<p>CIE XYZ relative to D50, Y = 1 for white.</p>
+</div>
+<div class="entry" id="Color-to_display_p3">
+<h3><span class="kind">method</span>Color::to_display_p3</h3>
+<pre class="sig">pub fn Color::to_display_p3(self : Color) -&gt; Color</pre>
+<p>Display P3, components 0–1.</p>
+</div>
+<div class="entry" id="Color-to_rec2020">
+<h3><span class="kind">method</span>Color::to_rec2020</h3>
+<pre class="sig">pub fn Color::to_rec2020(self : Color) -&gt; Color</pre>
+<p>Rec. 2020, components 0–1.</p>
+</div>
+<div class="entry" id="Color-to_a98_rgb">
+<h3><span class="kind">method</span>Color::to_a98_rgb</h3>
+<pre class="sig">pub fn Color::to_a98_rgb(self : Color) -&gt; Color</pre>
+<p>Adobe RGB (1998), components 0–1.</p>
+</div>
+<div class="entry" id="Color-to_prophoto">
+<h3><span class="kind">method</span>Color::to_prophoto</h3>
+<pre class="sig">pub fn Color::to_prophoto(self : Color) -&gt; Color</pre>
+<p>ProPhoto RGB, components 0–1.</p>
+</div>
+<div class="entry" id="Color-to_cmyk">
+<h3><span class="kind">method</span>Color::to_cmyk</h3>
+<pre class="sig">pub fn Color::to_cmyk(self : Color) -&gt; Cmyk</pre>
+<p>The colour as four inks: the arithmetic conversion, through sRGB, taking as much key as the colour allows. Black is all key, and a white has none.</p>
+<p>This is the inverse of <code>Cmyk::to_color</code> for the colour but not for the inks — the note on <code>Cmyk</code> says why, and the platform test that reads it back says it in numbers.</p>
+</div>
+<div class="entry" id="Color-to_ycbcr">
+<h3><span class="kind">method</span>Color::to_ycbcr</h3>
+<pre class="sig">pub fn Color::to_ycbcr(self : Color, luma~ : Luma) -&gt; Color</pre>
+<p>YCbCr with the given luma coefficients: luma 0–1, chroma −0.5–0.5.</p>
+</div>
+<div class="entry" id="Color-to_space">
+<h3><span class="kind">method</span>Color::to_space</h3>
+<pre class="sig">pub fn Color::to_space(self : Color, space : Space) -&gt; Color</pre>
+<p>The same colour in another space.</p>
+<p>This is the one conversion every <code>to_*</code> goes through, so that a pair of spaces is only ever defined once. Converting to the space a colour is already in returns it unchanged rather than round-tripping it through a hub, which would otherwise cost a matrix inversion for nothing.</p>
+</div>
+</section>
+<section class="band" id="band-parts">
+<div class="band-head">
+<h2>Components</h2>
+<span class="count">9</span>
+</div>
+<p>The three numbers, read and replaced. A colour keeps its space, so reading a component gives the number that space uses.</p>
+<div class="jump">
+<a href="#Color-components">Color::components</a>
+<a href="#Color-with_components">Color::with_components</a>
+<a href="#Color-with_alpha">Color::with_alpha</a>
+<a href="#Color-hue">Color::hue</a>
+<a href="#Color-lightness">Color::lightness</a>
+<a href="#Color-saturation">Color::saturation</a>
+<a href="#Color-chroma">Color::chroma</a>
+<a href="#Color-is_current">Color::is_current</a>
+<a href="#Color-resolve">Color::resolve</a>
+</div>
+<div class="entry" id="Color-components">
+<h3><span class="kind">method</span>Color::components</h3>
+<pre class="sig">pub fn Color::components(self : Color) -&gt; (Double, Double, Double)</pre>
+<p>The three components, in the order the space writes them.</p>
+</div>
+<div class="entry" id="Color-with_components">
+<h3><span class="kind">method</span>Color::with_components</h3>
+<pre class="sig">pub fn Color::with_components( self : Color, x : Double, y : Double, z : Double, ) -&gt; Color</pre>
+<p>The same colour with different components, in the same space.</p>
+</div>
+<div class="entry" id="Color-with_alpha">
+<h3><span class="kind">method</span>Color::with_alpha</h3>
+<pre class="sig">pub fn Color::with_alpha(self : Color, alpha : Double) -&gt; Color</pre>
+<p>The same colour at a different alpha.</p>
+</div>
+<div class="entry" id="Color-hue">
+<h3><span class="kind">method</span>Color::hue</h3>
+<pre class="sig">pub fn Color::hue(self : Color) -&gt; Double</pre>
+<p>The hue in degrees, or NaN where the space has none.</p>
+</div>
+<div class="entry" id="Color-lightness">
+<h3><span class="kind">method</span>Color::lightness</h3>
+<pre class="sig">pub fn Color::lightness(self : Color) -&gt; Double</pre>
+<p>The lightness, or NaN where the space has none.</p>
+</div>
+<div class="entry" id="Color-saturation">
+<h3><span class="kind">method</span>Color::saturation</h3>
+<pre class="sig">pub fn Color::saturation(self : Color) -&gt; Double</pre>
+<p>The saturation, or NaN where the space has none.</p>
+</div>
+<div class="entry" id="Color-chroma">
+<h3><span class="kind">method</span>Color::chroma</h3>
+<pre class="sig">pub fn Color::chroma(self : Color) -&gt; Double</pre>
+<p>The chroma, or NaN where the space has none.</p>
+</div>
+<div class="entry" id="Color-is_current">
+<h3><span class="kind">method</span>Color::is_current</h3>
+<pre class="sig">pub fn Color::is_current(self : Color) -&gt; Bool</pre>
+<p>Whether this is the unresolved <code>currentcolor</code> keyword.</p>
+</div>
+<div class="entry" id="Color-resolve">
+<h3><span class="kind">method</span>Color::resolve</h3>
+<pre class="sig">pub fn Color::resolve(self : Color, current : Color) -&gt; Color</pre>
+<p>Substitute the colour that <code>currentcolor</code> stands for. Anything else is returned unchanged, so this is safe to call on every colour.</p>
+</div>
+</section>
+<section class="band" id="band-gamut">
+<div class="band-head">
+<h2>Gamut</h2>
+<span class="count">3</span>
+</div>
+<p>Whether a colour fits, and what to do about it when it does not.</p>
+<div class="jump">
+<a href="#Color-in_gamut">Color::in_gamut</a>
+<a href="#Color-to_gamut">Color::to_gamut</a>
+<a href="#Color-clip">Color::clip</a>
+</div>
+<div class="entry" id="Color-in_gamut">
+<h3><span class="kind">method</span>Color::in_gamut</h3>
+<pre class="sig">pub fn Color::in_gamut(self : Color, space? : Space) -&gt; Bool</pre>
+<p>Whether the colour is inside the gamut of its space, or of <code>space</code> if one is given.</p>
+<p>A space with no gamut answers <code>true</code>: there is nothing for a colour to be outside of.</p>
+</div>
+<div class="entry" id="Color-to_gamut">
+<h3><span class="kind">method</span>Color::to_gamut</h3>
+<pre class="sig">pub fn Color::to_gamut(self : Color, space? : Space) -&gt; Color</pre>
+<p>The colour brought into the gamut of its space, or of <code>space</code> if one is given, by CSS Color 4's chroma reduction.</p>
+<p>A colour already inside comes back unchanged, in the space asked for. One outside loses chroma at constant lightness and hue until it fits, and only in the cases where that cannot work — a colour too light or too dark to exist at all — falls back to clipping.</p>
+</div>
+<div class="entry" id="Color-clip">
+<h3><span class="kind">method</span>Color::clip</h3>
+<pre class="sig">pub fn Color::clip(self : Color, space? : Space) -&gt; Color</pre>
+<p>The colour with every component clamped into 0–1 of its space, which is what a display does with a colour it cannot show.</p>
+<p>Clipping is a blunt instrument: it moves a colour along whichever axis overflows and leaves hue and lightness to follow. <code>to_gamut</code> is the answer that keeps them; this is the answer that costs nothing, and the one to use when the colour is already close to the edge.</p>
+</div>
+</section>
+<section class="band" id="band-mix">
+<div class="band-head">
+<h2>Mixing and adjusting</h2>
+<span class="count">6</span>
+</div>
+<p><code>color-mix()</code> and the four verbs that move one quantity.</p>
+<div class="jump">
+<a href="#Color-mix">Color::mix</a>
+<a href="#Color-lighten">Color::lighten</a>
+<a href="#Color-darken">Color::darken</a>
+<a href="#Color-saturate">Color::saturate</a>
+<a href="#Color-desaturate">Color::desaturate</a>
+<a href="#Color-fade">Color::fade</a>
+</div>
+<div class="entry" id="Color-mix">
+<h3><span class="kind">method</span>Color::mix</h3>
+<pre class="sig">pub fn Color::mix( self : Color, other : Color, space? : Space, hue? : Hue, weight? : Double, ) -&gt; Color</pre>
+<p>A mix of two colours, as <code>color-mix()</code> defines one.</p>
+<p><code>weight</code> is how much of this colour the result has: 0.3 means three parts of this and seven of <code>other</code>, which is what <code>color-mix(in oklab, this 30%, other)</code> writes. It defaults to half.</p>
+<p>The result is in the interpolation space, not in the space either colour came from: mixing in Oklab and then converting back to sRGB would lose the out-of-gamut values the mix produced, and <code>to_gamut</code> is the caller's decision to make.</p>
+<p>A missing component — <code>none</code> — takes the other colour's value before the mix, so that <code>oklch(none 0.1 200)</code> mixed with a colour that has a lightness interpolates that lightness rather than treating the gap as zero.</p>
+<p><code>currentcolor</code> is not mixed: it stands for a colour nobody has resolved yet, and the result would be a colour that pretends to know.</p>
+</div>
+<div class="entry" id="Color-lighten">
+<h3><span class="kind">method</span>Color::lighten</h3>
+<pre class="sig">pub fn Color::lighten(self : Color, amount : Double) -&gt; Color</pre>
+<p>Move the colour towards white by <code>amount</code>, a fraction of its space's lightness scale: 0.1 in HSL is a tenth of the way to white, 10 in Lab is ten units of lightness.</p>
+<p>Hue and chroma are kept, so this is not the same as mixing with white: a mix with white washes the chroma out as well.</p>
+</div>
+<div class="entry" id="Color-darken">
+<h3><span class="kind">method</span>Color::darken</h3>
+<pre class="sig">pub fn Color::darken(self : Color, amount : Double) -&gt; Color</pre>
+<p>Move the colour towards black by <code>amount</code>, a fraction of its space's lightness scale.</p>
+</div>
+<div class="entry" id="Color-saturate">
+<h3><span class="kind">method</span>Color::saturate</h3>
+<pre class="sig">pub fn Color::saturate(self : Color, amount : Double) -&gt; Color</pre>
+<p>Add chroma, by <code>amount</code> of the space's chroma scale: 0.1 is a tenth of the chroma a colour can have before it leaves what people can see.</p>
+<p>A colour already at the edge of its gamut gains nothing visible from this; <code>to_gamut</code> afterwards is what says so.</p>
+</div>
+<div class="entry" id="Color-desaturate">
+<h3><span class="kind">method</span>Color::desaturate</h3>
+<pre class="sig">pub fn Color::desaturate(self : Color, amount : Double) -&gt; Color</pre>
+<p>Take chroma away, by <code>amount</code> of the space's chroma scale. At 1 the colour is grey.</p>
+</div>
+<div class="entry" id="Color-fade">
+<h3><span class="kind">method</span>Color::fade</h3>
+<pre class="sig">pub fn Color::fade(self : Color, amount : Double) -&gt; Color</pre>
+<p>The same colour with less alpha, by <code>amount</code> of what it has: 0.25 leaves three quarters.</p>
+</div>
+</section>
+<section class="band" id="band-measure">
+<div class="band-head">
+<h2>Measuring</h2>
+<span class="count">4</span>
+</div>
+<p>Two contrast measures and four colour differences, each on its own scale.</p>
+<div class="jump">
+<a href="#Color-contrast">Color::contrast</a>
+<a href="#Color-apca">Color::apca</a>
+<a href="#Color-luminance">Color::luminance</a>
+<a href="#Color-delta_e">Color::delta_e</a>
+</div>
+<div class="entry" id="Color-contrast">
+<h3><span class="kind">method</span>Color::contrast</h3>
+<pre class="sig">pub fn Color::contrast(self : Color, other : Color) -&gt; Double</pre>
+<p>The WCAG 2 contrast ratio between two colours: 1 for the same colour, 21 for black on white.</p>
+<p>The order does not matter — this is the measure that is symmetric, and that is one of the reasons APCA exists.</p>
+</div>
+<div class="entry" id="Color-apca">
+<h3><span class="kind">method</span>Color::apca</h3>
+<pre class="sig">pub fn Color::apca(self : Color, background : Color) -&gt; Double</pre>
+<p>The APCA lightness contrast <code>Lc</code> of this colour as text on <code>background</code>: positive for dark text on a light background, negative the other way round, and zero when the pair is too close to read at all.</p>
+<p>The constants are APCA 0.98G-4g, the version the SAPC project publishes for web use. A sign-flipped result is not a mistake: it says which way round the pair is, and the thresholds for readable text are different in each direction, so a caller that wants "is this readable" has to ask about a specific way round.</p>
+</div>
+<div class="entry" id="Color-luminance">
+<h3><span class="kind">method</span>Color::luminance</h3>
+<pre class="sig">pub fn Color::luminance(self : Color) -&gt; Double</pre>
+<p>Relative luminance per WCAG 2: sRGB made linear, weighted by the eye's sensitivity to each primary, with the components clamped to what a screen can show.</p>
+</div>
+<div class="entry" id="Color-delta_e">
+<h3><span class="kind">method</span>Color::delta_e</h3>
+<pre class="sig">pub fn Color::delta_e(self : Color, other : Color, delta? : Delta) -&gt; Double</pre>
+<p>The distance between two colours, by the chosen measure.</p>
+<p>Colours in any space are converted to the one the measure is defined on, so <code>delta_e</code> answers about the colours, not about where they are written. Opaque alpha plays no part: this is a distance between colours, and a colour at 10% opacity is the same colour as one at 100%.</p>
+</div>
+</section>
+<section class="band" id="band-terminal">
+<div class="band-head">
+<h2>A terminal</h2>
+<span class="count">3</span>
+</div>
+<p>The nearest named colour, the nearest slot of the 256, and the three bytes of true colour.</p>
+<div class="jump">
+<a href="#Color-to_ansi16">Color::to_ansi16</a>
+<a href="#Color-to_ansi256">Color::to_ansi256</a>
+<a href="#Color-rgb8">Color::rgb8</a>
+</div>
+<div class="entry" id="Color-to_ansi16">
+<h3><span class="kind">method</span>Color::to_ansi16</h3>
+<pre class="sig">pub fn Color::to_ansi16(self : Color) -&gt; Ansi16</pre>
+<p>The named slot closest to this colour by ΔE OK.</p>
+</div>
+<div class="entry" id="Color-to_ansi256">
+<h3><span class="kind">method</span>Color::to_ansi256</h3>
+<pre class="sig">pub fn Color::to_ansi256(self : Color) -&gt; Ansi256</pre>
+<p>The slot of the 256-colour palette closest to this colour by ΔE OK.</p>
+</div>
+<div class="entry" id="Color-rgb8">
+<h3><span class="kind">method</span>Color::rgb8</h3>
+<pre class="sig">pub fn Color::rgb8(self : Color) -&gt; (Int32, Int32, Int32)</pre>
+<p>The colour as the three bytes a true-colour escape sequence carries, 0–255 each, clipped the way a terminal clips.</p>
+</div>
+</section>
+<section class="band" id="band-names">
+<div class="band-head">
+<h2>The name table</h2>
+<span class="count">2</span>
+</div>
+<p>The 148 names CSS defines, in the order the table keeps them.</p>
+<div class="jump">
+<a href="#names_all">names_all</a>
+<a href="#names_count">names_count</a>
+</div>
+<div class="entry" id="names_all">
+<h3><span class="kind">fn</span>names_all</h3>
+<pre class="sig">pub fn names_all() -&gt; Array[StringView]</pre>
+<p>All the names, in the order the table keeps them.</p>
+</div>
+<div class="entry" id="names_count">
+<h3><span class="kind">fn</span>names_count</h3>
+<pre class="sig">pub fn names_count() -&gt; Int32</pre>
+<p>The number of names, which CSS Color 4 fixes at 148.</p>
+</div>
+</section>
+    </article>
+
+    <aside class="itinerary">
+      <p class="label">Bands</p>
+      <ol>
+<li><a href="#band-types">Types</a></li>
+<li><a href="#band-make">Making a colour</a></li>
+<li><a href="#band-read">Reading and writing</a></li>
+<li><a href="#band-convert">Converting</a></li>
+<li><a href="#band-parts">Components</a></li>
+<li><a href="#band-gamut">Gamut</a></li>
+<li><a href="#band-mix">Mixing and adjusting</a></li>
+<li><a href="#band-measure">Measuring</a></li>
+<li><a href="#band-terminal">A terminal</a></li>
+<li><a href="#band-names">The name table</a></li>
+      </ol>
+      <ul class="sub">
+        <li><a href="guide.html">The guide</a></li>
+        <li><a href="./#dossier">Space table</a></li>
+        <li><a href="https://mooncakes.io/docs/moonbitstack/moonrgba">mooncakes</a></li>
+      </ul>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="wrap">
+  <span>Apache-2.0 · the same code on every target</span>
+  <span><a href="https://github.com/moonbitstack/moonrgba">Source</a> · <a href="https://mooncakes.io/docs/moonbitstack/moonrgba">Package</a></span>
+</footer>
+
+<script type="module" src="assets/doc.js"></script>
+</body>
+</html>

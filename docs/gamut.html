@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Where the colour stops · moonrgba</title>
+<meta name="description" content="The sRGB gamut at one lightness, drawn from the library in the Oklch plane, with the chroma reduction that brings a colour inside it.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="site wrap">
+  <a class="brand" href="./"><b>moonrgba</b><small>colour for MoonBit</small></a>
+  <nav class="top">
+    <a href="guide.html">Guide</a>
+    <a href="api.html">API</a>
+    <a href="gamut.html" aria-current="page">Gamut</a>
+    <a class="gh" href="https://github.com/moonbitstack/moonrgba" aria-label="Source on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <div class="doc-head">
+    <p class="eyebrow">The gamut</p>
+    <h1>Where the colour stops.</h1>
+    <p class="lede">sRGB is a shape inside Oklch, not a box. At any one lightness it is a
+      closed curve: everything inside can be shown on an ordinary screen, everything outside
+      cannot. This page draws that curve from the library, and moves a point into it the way
+      <code>Color::to_gamut</code> does.</p>
+    <p class="doc-meta"><span>OkLCh slice</span><span>sRGB</span><span>CSS Color 4 §13.2</span></p>
+  </div>
+
+  <div class="bench bench-gamut">
+
+    <figure class="plot">
+      <div class="plot-frame">
+        <canvas id="surface" aria-hidden="true"></canvas>
+        <canvas id="marks" role="img" aria-label="A point in the Oklch plane and the colour it is mapped to"></canvas>
+      </div>
+      <figcaption>
+        <span><i class="lg lg-ring"></i>the colour asked for</span>
+        <span><i class="lg lg-square"></i>what the library returns</span>
+        <span><i class="lg lg-line"></i>chroma, held at this lightness and hue</span>
+      </figcaption>
+    </figure>
+
+    <section class="panel" aria-label="The point under inspection">
+
+      <label class="field" for="css">
+        <span class="tag">css</span>
+        <input id="css" value="oklch(0.7 0.4 30)" spellcheck="false" autocomplete="off"
+               aria-label="A CSS colour">
+      </label>
+
+      <dl class="read">
+        <div><dt>state</dt><dd id="state" data-out="1">outside sRGB</dd></div>
+        <div><dt>moved</dt><dd id="moved">0.1945</dd></div>
+        <div><dt>lightness</dt><dd id="rl">0.7000</dd></div>
+        <div><dt>chroma</dt><dd id="rc">0.4000</dd></div>
+        <div><dt>hue</dt><dd id="rh">30.00</dd></div>
+        <div><dt>edge here</dt><dd id="re">0.1915</dd></div>
+      </dl>
+
+      <div class="sliders">
+        <div class="slider">
+          <label for="sl">light</label>
+          <input id="sl" type="range" min="0.05" max="0.99" step="0.005" value="0.7">
+          <output id="slOut" for="sl">0.700</output>
+        </div>
+        <div class="slider">
+          <label for="sc">chroma</label>
+          <input id="sc" type="range" min="0" max="0.4" step="0.002" value="0.4">
+          <output id="scOut" for="sc">0.400</output>
+        </div>
+        <div class="slider">
+          <label for="sh">hue</label>
+          <input id="sh" type="range" min="0" max="359" step="1" value="30">
+          <output id="shOut" for="sh">30°</output>
+        </div>
+      </div>
+
+      <div class="curve">
+        <p class="pane-label">ΔE OK from the clipped colour, along the line</p>
+        <canvas id="delta" aria-hidden="true"></canvas>
+        <p class="curve-note">Below the 0.02 mark, clipping is close enough to the colour
+          asked for that the search stops there.</p>
+      </div>
+
+      <div class="mapped">
+        <span class="mapped-swatch" id="mappedSwatch"></span>
+        <span class="mapped-text">
+          <b id="mappedHex">#ff5843</b>
+          <span id="mappedLch">oklch(0.6831 0.2062 30.18163)</span>
+        </span>
+      </div>
+
+    </section>
+
+  </div>
+
+  <section class="prose how">
+    <div class="sec-head">
+      <span class="index">01</span>
+      <h2>How it decides</h2>
+      <p>Four steps, and the fourth is the one that surprises people.</p>
+    </div>
+    <ol class="steps">
+      <li><b>Ask whether it fits.</b> A colour inside the target gamut comes back unchanged.</li>
+      <li><b>Hold lightness and hue, and halve the chroma.</b> The interval between a chroma
+        that fits and one that does not is cut in half until the answer is as precise as the
+        arithmetic allows — twenty-two times, which is further than the eye can see.</li>
+      <li><b>Compare with what clipping would give.</b> At each candidate, the colour is also
+        clipped, and the two are measured with ΔE OK. Under 0.02 — about the smallest step an
+        eye notices — the candidate is close enough, and the search keeps the chroma it has
+        rather than shrinking further.</li>
+      <li><b>Fall back to clipping when nothing passes.</b> A colour too light or too dark to
+        exist at any chroma cannot be reached by lowering chroma at all, so the clipped
+        colour is the answer, and it may have moved in lightness and hue. That is why the
+        square on the plot is not always on the line.</li>
+    </ol>
+    <p>The surface is not a gradient. It is six rings of 180 colours each, computed by the
+      library at this lightness — 1,080 conversions per redraw, which is why the plot changes
+      when you move the lightness slider and not while you drag the hue.</p>
+    <p>Read the other way round, the shape is the answer to a question: at this lightness,
+      no colour with more chroma than the edge exists on an sRGB screen, whatever its hue.</p>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>Apache-2.0 · the same code on every target</span>
+  <span><a href="https://github.com/moonbitstack/moonrgba">Source</a> · <a href="https://mooncakes.io/docs/moonbitstack/moonrgba">Package</a></span>
+</footer>
+
+<script type="module" src="assets/gamut.js"></script>
+</body>
+</html>

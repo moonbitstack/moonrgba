@@ -4,6 +4,10 @@ package "moonbitstack/moonrgba/examples/browser"
 // Values
 pub fn facts(String) -> String
 
+pub fn section(String) -> String
+
+pub fn slice(Double) -> String
+
 // Errors
 
 // Types and methods

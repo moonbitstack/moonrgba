@@ -173,3 +173,139 @@ fn gamut(color : @moonrgba.Color) -> Json {
   }
   json
 }
+
+///|
+/// The sRGB boundary at one lightness, and the colours inside it.
+///
+/// `chroma` is the largest chroma that still fits at each hue: 180 values, two
+/// degrees apart, starting at hue 0 — the outline of what a screen can show at
+/// that lightness. `bands` is the same surface painted: six rings from the
+/// boundary inwards, each a row of hex colours, so the page can fill the shape
+/// with colours the library computed rather than with a gradient of its own.
+///
+/// The outline is found by halving the distance between a chroma that fits and
+/// one that does not, so it is the boundary rather than an approximation of it.
+pub fn slice(lightness : Double) -> String {
+  let edges : Array[Double] = []
+  for step in 0..<180 {
+    edges.push(edge_chroma(lightness, step.to_double() * 2.0))
+  }
+  let chroma : Array[Json] = []
+  for edge in edges {
+    chroma.push(Json(round(edge, 10000.0)))
+  }
+  // Ten rings, outermost first. Six left the steps visible as contours; ten is
+  // where the surface reads as a surface and still costs one screen of fills.
+  let bands : Array[Json] = []
+  for band in 0..<10 {
+    let share = 1.0 - band.to_double() / 10.0
+    let row : Array[Json] = []
+    for step in 0..<180 {
+      let hue = step.to_double() * 2.0
+      row.push(
+        Json(
+          @moonrgba.Color::oklch(lightness, edges[step] * share, hue).encode(
+            format=@moonrgba.Format::Hex,
+          ),
+        ),
+      )
+    }
+    bands.push(Json(row))
+  }
+  let core = @moonrgba.Color::oklch(lightness, 0.0, 0.0).encode(
+    format=@moonrgba.Format::Hex,
+  )
+  let json : Json = {
+    "l": Json(round(lightness, 10000.0)),
+    "step": Json(2),
+    "core": Json(core),
+    "chroma": Json(chroma),
+    "bands": Json(bands),
+  }
+  json.stringify()
+}
+
+///|
+/// The largest chroma that is inside sRGB at this lightness and hue.
+fn edge_chroma(lightness : Double, hue : Double) -> Double {
+  let mut low = 0.0
+  let mut high = 0.5
+  for _ in 0..<22 {
+    let middle = (low + high) / 2.0
+    if @moonrgba.Color::oklch(lightness, middle, hue).in_gamut(
+        space=@moonrgba.Space::Srgb,
+      ) {
+      low = middle
+    } else {
+      high = middle
+    }
+  }
+  low
+}
+
+///|
+/// One colour's journey into the gamut: where it sits, where the boundary is at
+/// its lightness and hue, what the library maps it to, and how far apart from
+/// it the clipped version is along the way.
+///
+/// `curve` is the decision the mapping makes — ΔE OK between the candidate and
+/// the colour clipping would give — sampled from grey out past the boundary. The
+/// 0.02 line on that curve is the just-noticeable difference the algorithm
+/// compares against, so the page can show the test rather than describe it.
+pub fn section(css : String) -> String {
+  let color = match @moonrgba.Color::decode_opt(css) {
+    Some(color) => color
+    None => return Json({ "ok": Json(false) }).stringify()
+  }
+  let oklch = color.to_oklch()
+  let lightness = oklch.x
+  let chroma = oklch.y
+  let hue = oklch.z
+  let edge = edge_chroma(lightness, hue)
+  let mapped = color.to_gamut(space=@moonrgba.Space::Srgb)
+  let mapped_lch = mapped.to_oklch()
+  let reach = if chroma > edge { chroma } else { edge }
+  let curve : Array[Json] = []
+  for step in 0..<=24 {
+    let at = reach * step.to_double() / 24.0
+    let candidate = @moonrgba.Color::oklch(lightness, at, hue)
+    let clipped = candidate.clip(space=@moonrgba.Space::Srgb)
+    curve.push(
+      Json({
+        "c": Json(round(at, 10000.0)),
+        "de": Json(
+          round(candidate.delta_e(clipped, delta=@moonrgba.Delta::Ok), 100000.0),
+        ),
+      }),
+    )
+  }
+  let json : Json = {
+    "ok": Json(true),
+    "l": Json(round(lightness, 10000.0)),
+    "c": Json(round(chroma, 10000.0)),
+    "h": Json(round(hue, 10000.0)),
+    "inside": Json(color.in_gamut(space=@moonrgba.Space::Srgb)),
+    "edge": Json(round(edge, 10000.0)),
+    "edgeHex": Json(
+      @moonrgba.Color::oklch(lightness, edge, hue).encode(
+        format=@moonrgba.Format::Hex,
+      ),
+    ),
+    "mapped": Json({
+      "l": Json(round(mapped_lch.x, 10000.0)),
+      "c": Json(round(mapped_lch.y, 10000.0)),
+      "h": Json(round(mapped_lch.z, 10000.0)),
+      "hex": Json(mapped.encode(format=@moonrgba.Format::Hex)),
+    }),
+    "clipHex": Json(
+      color
+      .clip(space=@moonrgba.Space::Srgb)
+      .encode(format=@moonrgba.Format::Hex),
+    ),
+    "delta": Json(
+      round(color.delta_e(mapped, delta=@moonrgba.Delta::Ok), 100000.0),
+    ),
+    "curve": Json(curve),
+  }
+  json.stringify()
+}

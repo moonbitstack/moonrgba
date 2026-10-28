@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The guide · moonrgba</title>
+<meta name="description" content="A walk through moonrgba: reading and writing CSS colours, converting between spaces, bringing a colour into a gamut, mixing, measuring, and putting a colour in a terminal.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="site wrap">
+  <a class="brand" href="./"><b>moonrgba</b><small>colour for MoonBit</small></a>
+  <nav class="top">
+    <a href="guide.html" aria-current="page">Guide</a>
+    <a href="api.html">API</a>
+    <a href="gamut.html">Gamut</a>
+    <a class="gh" href="https://github.com/moonbitstack/moonrgba" aria-label="Source on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <div class="doc-head">
+    <p class="eyebrow">Guide</p>
+    <h1>From a value on the clipboard to a theme scale.</h1>
+    <p class="lede">Fourteen short chapters, in the order you are likely to need them. The
+      listings are the code of one program — <code>src/examples/guide</code> — and the
+      right-hand pane of each is what that program printed when it ran.</p>
+    <p class="doc-meta"><span>14 chapters</span><span>MoonBit</span><span>Apache-2.0</span></p>
+  </div>
+
+  <div class="doc-body">
+
+    <article class="prose">
+
+      <section class="chapter" id="install">
+        <div class="chapter-head"><span class="n">01</span><h2>Install</h2></div>
+        <p>Add the package and import it under a short name. Everything lives in one
+          package, so one import is all there is.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">shell</p>
+            <pre><code>moon add moonbitstack/moonrgba</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">moon.pkg</p>
+            <pre><code>import {
+  "moonbitstack/moonrgba",
+}</code></pre>
+          </div>
+        </div>
+        <p>After that, <code>@moonrgba.</code> reaches everything on this site. There is no
+          configuration, no initialisation step, and no I/O: a colour is a value, and every
+          function here is a pure conversion of one.</p>
+        <div class="note"><b>Four targets.</b> The library is compiled for the native, wasm,
+          wasm-gc and JavaScript backends on every run, so the same code works in a build
+          script, in a page, and in a wasm module. The
+          <a href="./">homepage board</a> is the library itself, compiled to JavaScript.</div>
+      </section>
+
+      <section class="chapter" id="read">
+        <div class="chapter-head"><span class="n">02</span><h2>A value, read and written</h2></div>
+        <p><code>decode</code> takes one value — what would sit on the right of
+          <code>color:</code> — and gives a colour. <code>encode</code> gives back the
+          shortest spelling that reads as the same colour.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>let brand = @moonrgba.Color::decode("#0891b2")
+
+brand.encode()
+@moonrgba.Color::decode("rgb(10 20 30 / 50%)").encode()
+@moonrgba.Color::decode("rebeccapurple").encode()
+@moonrgba.Color::decode("hsl(190deg 91% 36%)").encode()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:read -->#0891b2
+rgb(10 20 30 / 0.5)
+#639
+hsl(190 91% 36%)<!-- /run:read --></code></pre>
+          </div>
+        </div>
+        <p>Three of those four results are shorter than what went in, and none of them is a
+          different colour. <code>rebeccapurple</code> is written <code>#639</code> because
+          three digits hold it exactly; the <code>deg</code> goes because degrees are the
+          default unit; and a half is written as a fraction rather than as a percentage.</p>
+        <p>The writer only shortens when the short form is exact. A channel of 127.5 has no
+          two-digit hexadecimal spelling, so it stays <code>rgb(127.5 127.5 127.5)</code>
+          rather than being rounded into a slightly different colour.</p>
+      </section>
+
+      <section class="chapter" id="spaces">
+        <div class="chapter-head"><span class="n">03</span><h2>Into another space</h2></div>
+        <p>Every conversion is a method named after its destination, and it returns a colour
+          tagged with that space. Nothing is converted twice by hand.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>brand.to_oklch().encode()
+brand.to_display_p3().encode()
+brand.to_xyz_d65().encode()
+brand.to_srgb().components()
+brand.to_cmyk().k</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:spaces -->oklch(0.60891 0.11094 221.72312)
+color(display-p3 0.25345 0.55999 0.68426)
+color(xyz-d65 0.1826 0.23516 0.45697)
+0.03137254901960784, 0.5686274509803921, 0.6980392156862745
+0.3019607843137255<!-- /run:spaces --></code></pre>
+          </div>
+        </div>
+        <p>Two hubs do the work: a conversion between two spaces with primaries goes through
+          D65 XYZ, and a conversion involving HSL, HSV, HWB or YCbCr goes through sRGB, where
+          those four are defined. Which route a pair takes is in the table on the
+          <a href="./#dossier">homepage</a>, and it is the reason a round trip through a
+          related space is exact rather than nearly exact.</p>
+        <p><code>to_cmyk</code> is the exception: four inks do not fit in three components, so
+          it returns a <code>Cmyk</code> of its own, and the colour survives the round trip
+          while the ink quantities need not.</p>
+      </section>
+
+      <section class="chapter" id="construct">
+        <div class="chapter-head"><span class="n">04</span><h2>Building one directly</h2></div>
+        <p>Each constructor takes its space's own units: <code>rgb</code> takes 0–255, the
+          rest take the scale their space is defined on. The colour stays in the space it was
+          built in, which is why an HSL colour is written back as HSL.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>@moonrgba.Color::rgb(8, 145, 178).encode()
+@moonrgba.Color::hsl(190.0, 0.91, 0.36).encode()
+@moonrgba.Color::oklch(0.6, 0.11, 222.0).encode()
+@moonrgba.Color::rgb(8, 145, 178, alpha=0.4).encode()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:construct -->#0891b2
+hsl(190 91% 36%)
+oklch(0.6 0.11 222)
+#0891b266<!-- /run:construct --></code></pre>
+          </div>
+        </div>
+        <p>Alpha is an optional labelled argument everywhere, and it is a fraction of one
+          rather than a byte, so nothing rounds while the colour is being built. The last
+          line is a hexadecimal spelling with alpha: <code>66</code> is
+          <code>0.4 × 255</code>, and 0.4 has an exact byte only because it was chosen to.</p>
+      </section>
+
+      <section class="chapter" id="gamut">
+        <div class="chapter-head"><span class="n">05</span><h2>The gamut</h2></div>
+        <p>Oklch can describe colours no screen can show. Asking whether one fits is a
+          question; doing something about it is a choice between two answers.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>let wide = @moonrgba.Color::oklch(0.7, 0.4, 30.0)
+
+wide.in_gamut(space=@moonrgba.Space::Srgb)
+wide.clip(space=@moonrgba.Space::Srgb).encode()
+wide.to_gamut(space=@moonrgba.Space::Srgb).encode()
+wide.to_gamut(space=@moonrgba.Space::Srgb).to_oklch().encode()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:gamut -->false
+#f00
+rgb(255 88.00945 67.46665)
+oklch(0.6831 0.2062 30.18163)<!-- /run:gamut --></code></pre>
+          </div>
+        </div>
+        <p><code>clip</code> pushes each channel into 0–1 and keeps whatever comes out. It is
+          cheap, it is what a browser does to a colour it cannot draw, and it is why the
+          clipped result is a pure red: two channels were below zero and both became zero,
+          so the hue that was there is gone.</p>
+        <p><code>to_gamut</code> keeps the hue and lowers chroma until the colour fits. The
+          result is still red, but a red with some orange left in it and a lightness close to
+          the one asked for. The last line shows what it cost: chroma 0.4 became 0.206, and
+          lightness moved by 0.017, because the search lands on the surface of the gamut
+          rather than on the line through it.</p>
+        <p><a href="gamut.html">The gamut page</a> draws this: the sRGB surface at a chosen
+          lightness, and the path the search takes to it.</p>
+      </section>
+
+      <section class="chapter" id="mix">
+        <div class="chapter-head"><span class="n">06</span><h2>Mixing</h2></div>
+        <p><code>mix</code> is <code>color-mix()</code>. The space decides what the mixture
+          means, and <code>weight</code> is how much of the first colour is left: 1 is the
+          first colour, 0 the second.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>brand.mix(@moonrgba.Color::white(), space=@moonrgba.Space::Oklch).encode()
+brand.mix(@moonrgba.Color::white(),
+  space=@moonrgba.Space::Oklab, weight=0.25).encode()
+
+let red = @moonrgba.Color::hsl(350.0, 1.0, 0.5)
+let orange = @moonrgba.Color::hsl(10.0, 1.0, 0.5)
+red.mix(orange, space=@moonrgba.Space::Hsl, hue=@moonrgba.Hue::Shorter).hue()
+red.mix(orange, space=@moonrgba.Space::Hsl, hue=@moonrgba.Hue::Longer).hue()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:mix -->oklch(0.80446 0.05547 221.72312)
+oklab(0.90223 -0.0207 -0.01846)
+0
+180<!-- /run:mix --></code></pre>
+          </div>
+        </div>
+        <p>Mixing with white in Oklch keeps the hue and lifts lightness; doing it in Oklab
+          gives a different colour, because Oklab interpolates the two axes rather than the
+          polar pair. Neither is more correct — the space is the choice.</p>
+        <p>350° and 10° are twenty degrees apart the short way round and three hundred and
+          forty the long way. The four directions name those two routes explicitly, which is
+          what stops a gradient between two reds from sweeping through blue.</p>
+        <div class="note"><b>Alpha is premultiplied</b>, as CSS Color 5 requires: a
+          transparent colour contributes less to the result than an opaque one at the same
+          weight. A missing component is filled in from the other colour before the
+          arithmetic, and stays missing only if both sides miss it.</div>
+      </section>
+
+      <section class="chapter" id="contrast">
+        <div class="chapter-head"><span class="n">07</span><h2>Contrast</h2></div>
+        <p>Two measures, and they are not two spellings of one idea.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>let paper = @moonrgba.Color::white()
+let ink = @moonrgba.Color::black()
+
+brand.contrast(paper)
+brand.apca(paper)
+paper.apca(ink)
+ink.apca(paper)
+brand.luminance()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:contrast -->3.6820433648230324
+63.83199046294621
+-107.88473318309848
+106.04067321268862
+0.23516774409322186<!-- /run:contrast --></code></pre>
+          </div>
+        </div>
+        <p><code>contrast</code> is WCAG 2: a ratio from 1 to 21, symmetric, and the number
+          the guidelines state thresholds in. 3.68 is below 4.5, so this blue is not a body
+          text colour on white.</p>
+        <p><code>apca</code> is signed, and that is the point. Light text on dark and dark
+          text on light are not the same problem at the same ratio, because the eye is not
+          symmetric about the background: the same near-black on white reads −107.9 and
+          white on near-black +106.0. Compare magnitudes when you want one number; keep the
+          sign when you want to know which way round the pair is.</p>
+        <p><code>luminance</code> is the relative luminance both measures are built on, and
+          it is the reason a saturated blue is darker than it looks.</p>
+      </section>
+
+      <section class="chapter" id="difference">
+        <div class="chapter-head"><span class="n">08</span><h2>Difference</h2></div>
+        <p>How far apart two colours are, under four measures that disagree about what
+          "far" means — which is why each one is asked for by name.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>let alarm = @moonrgba.Color::rgb(220, 38, 38)
+
+brand.delta_e(alarm, delta=@moonrgba.Delta::E76)
+brand.delta_e(alarm, delta=@moonrgba.Delta::E2000)
+brand.delta_e(alarm, delta=@moonrgba.Delta::Ok)</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:difference -->119.23892113137784
+65.2938363262246
+0.32534740298804965<!-- /run:difference --></code></pre>
+          </div>
+        </div>
+        <p>These are not three estimates of one number. 119 and 65 are both "these two
+          colours are obviously different", written on scales that happen to be numbered
+          differently, and neither can be compared to the other. ΔE OK is measured in Oklab,
+          where 0.02 is about the smallest step an eye notices; that is the unit the gamut
+          mapping in the previous chapter spends.</p>
+        <p>ΔE 94 is the fourth, and the only one where the order of the arguments changes the
+          answer: its first colour is the reference.</p>
+      </section>
+
+      <section class="chapter" id="adjust">
+        <div class="chapter-head"><span class="n">09</span><h2>Adjusting</h2></div>
+        <p>Four verbs, each of which moves one quantity of the colour it is given.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>brand.lighten(0.1).encode()
+brand.darken(0.1).encode()
+brand.saturate(0.2).encode()
+brand.fade(0.5).encode()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:adjust -->oklch(0.70891 0.11094 221.72312)
+oklch(0.50891 0.11094 221.72312)
+oklch(0.60891 0.19094 221.72312)
+rgb(8 145 178 / 0.5)<!-- /run:adjust --></code></pre>
+          </div>
+        </div>
+        <p>The amount is a fraction of the scale the colour's own space uses for that
+          quantity, which is why the first two results are in Oklch: an sRGB colour has no
+          lightness to push on, so the adjustment happens where the quantity lives and the
+          result stays there. Hue is untouched throughout — a lighten that turned the colour
+          would be a different operation wearing the same name.</p>
+        <p><code>fade</code> multiplies alpha, so 0.5 on an opaque colour leaves half, and
+          applying it twice leaves a quarter.</p>
+      </section>
+
+      <section class="chapter" id="names">
+        <div class="chapter-head"><span class="n">10</span><h2>Names</h2></div>
+        <p>The 148 names CSS defines, both ways.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>@moonrgba.Color::of_name("RebeccaPurple").unwrap().encode()
+brand.name().unwrap_or("no name")
+@moonrgba.Color::rgb(0, 128, 128).name().unwrap()
+@moonrgba.names_count()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:names -->#639
+no name
+teal
+148<!-- /run:names --></code></pre>
+          </div>
+        </div>
+        <p>Lookup ignores case, because CSS keywords do and a theme file written by hand will
+          not agree about it. The reverse is exact: a colour has a name only if it is one of
+          the 148, so the blue this guide has been using all along has none, and the library
+          says so instead of offering the nearest.</p>
+      </section>
+
+      <section class="chapter" id="terminal">
+        <div class="chapter-head"><span class="n">11</span><h2>In a terminal</h2></div>
+        <p>Three tiers, and the nearest colour in each.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>brand.to_ansi16().to_string()
+brand.to_ansi256().code()
+brand.rgb8()
+@moonrgba.Ansi256::of(196).color().encode()
+brand.to_ansi16().color().encode()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:terminal -->cyan
+31
+8, 145, 178
+#f00
+#008080<!-- /run:terminal --></code></pre>
+          </div>
+        </div>
+        <p>"Nearest" is measured in Oklab, not in sRGB. The palette is uneven — sixteen
+          arbitrary colours, then a cube that is coarse near black and fine near white — and
+          a distance measured in Oklab stays even across that unevenness.</p>
+        <p>The last two lines are the way back: a slot stands for a colour, and asking it is
+          how you learn what a terminal will draw. These are xterm's defaults, which is what
+          emulators are compatible with; a reader's theme may have replaced them.</p>
+      </section>
+
+      <section class="chapter" id="none">
+        <div class="chapter-head"><span class="n">12</span><h2>Missing components</h2></div>
+        <p><code>none</code> is a component the author left out, and it is not zero.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>let unpainted = @moonrgba.Color::decode("oklch(0.5 0.1 none)")
+
+unpainted.encode()
+unpainted.hue()
+unpainted.mix(@moonrgba.Color::oklch(0.8, 0.1, 20.0),
+  space=@moonrgba.Space::Oklch).encode()
+@moonrgba.Color::rgb(128, 128, 128).to_hsl().encode()</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:none -->oklch(0.5 0.1 none)
+NaN
+oklch(0.65 0.1 20)
+hsl(none 0% 50.19608%)<!-- /run:none --></code></pre>
+          </div>
+        </div>
+        <p>Internally it is a NaN, which is the one value that cannot be mistaken for a real
+          component. A zero hue is red, so a grey written as <code>hsl(0 0% 50%)</code>
+          would drag an interpolation towards red; <code>none</code> takes the other
+          colour's hue instead, which is why the mixed result above has one.</p>
+        <p>The last line is the same fact from the other direction: a grey converted to HSL
+          has no hue to report, and the writer says <code>none</code> rather than inventing
+          zero.</p>
+      </section>
+
+      <section class="chapter" id="errors">
+        <div class="chapter-head"><span class="n">13</span><h2>When it refuses</h2></div>
+        <p><code>decode</code> raises <code>Refused</code>, which says where it stopped and
+          what it was looking for.</p>
+        <div class="listing">
+          <div class="pane">
+            <p class="pane-label">moonbit</p>
+            <pre><code>let problem : @moonrgba.Refused = try {
+  ignore(@moonrgba.Color::decode("rgb(1 2)"))
+  abort("unreachable")
+} catch {
+  error => error
+}
+
+problem.to_string()
+match problem {
+  @moonrgba.Unexpected(at~, got~, want~) =>
+    "at \{at}, found \{got}, wanted \{want}"
+  @moonrgba.Unknown(at~, got~) => "at \{at}, unknown \{got}"
+}
+@moonrgba.Color::decode_opt("rgb(1 2)")
+@moonrgba.Color::decode_opt("chucknorris")</code></pre>
+          </div>
+          <div class="pane out">
+            <p class="pane-label">prints</p>
+            <pre><code><!-- run:errors -->at 7: got ), want a number
+at 7, found ), wanted a number
+refused, as an option
+refused, as an option<!-- /run:errors --></code></pre>
+          </div>
+        </div>
+        <p>There are two kinds of refusal, and a caller can tell them apart without reading
+          the message: <code>Unexpected</code> is a value that broke the grammar,
+          <code>Unknown</code> is a name or a function that is not a colour.
+          <code>at</code> is an offset in code points from the start of the value, so a
+          theme reader can point at the line it was reading.</p>
+        <p><code>decode_opt</code> is the same reader with the refusal turned into
+          <code>None</code>, for the case where you only want to know whether a value can be
+          read.</p>
+      </section>
+
+      <section class="chapter" id="next">
+        <div class="chapter-head"><span class="n">14</span><h2>Where next</h2></div>
+        <p>The <a href="api.html">reference</a> has every public function and type, with the
+          signature it actually has. The <a href="gamut.html">gamut page</a> draws the
+          algorithm from chapter five. The <a href="./">homepage</a> is the library compiled
+          to JavaScript, with a dial for a hue and a card for the numbers.</p>
+        <p>Two examples are worth reading as a whole: <code>src/examples/tour</code> takes
+          one colour through every space and every measure, and
+          <code>src/examples/theme</code> builds a theme scale from a single seed colour,
+          including which of two inks to print on each step.</p>
+      </section>
+
+    </article>
+
+    <aside class="itinerary">
+      <p class="label">Chapters</p>
+      <ol>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#read">A value, read and written</a></li>
+        <li><a href="#spaces">Into another space</a></li>
+        <li><a href="#construct">Building one directly</a></li>
+        <li><a href="#gamut">The gamut</a></li>
+        <li><a href="#mix">Mixing</a></li>
+        <li><a href="#contrast">Contrast</a></li>
+        <li><a href="#difference">Difference</a></li>
+        <li><a href="#adjust">Adjusting</a></li>
+        <li><a href="#names">Names</a></li>
+        <li><a href="#terminal">In a terminal</a></li>
+        <li><a href="#none">Missing components</a></li>
+        <li><a href="#errors">When it refuses</a></li>
+        <li><a href="#next">Where next</a></li>
+      </ol>
+      <ul class="sub">
+        <li><a href="api.html">API reference</a></li>
+        <li><a href="gamut.html">The gamut page</a></li>
+        <li><a href="https://mooncakes.io/docs/moonbitstack/moonrgba">mooncakes</a></li>
+      </ul>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="wrap">
+  <span>Apache-2.0 · the same code on every target</span>
+  <span><a href="https://github.com/moonbitstack/moonrgba">Source</a> · <a href="https://mooncakes.io/docs/moonbitstack/moonrgba">Package</a></span>
+</footer>
+
+<script type="module" src="assets/doc.js"></script>
+</body>
+</html>

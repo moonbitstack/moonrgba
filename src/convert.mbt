@@ -959,11 +959,20 @@ pub extend Cmyk with Eq::{equal, not_equal}
 pub extend Cmyk with Debug::{to_repr}
 
 ///|
+/// Four inks. Nothing is clamped here: an ink of 1.2 is a number no press can
+/// lay down, and deciding that is the printer's business rather than the type's.
+/// `to_color` clamps on the way back out, so the arithmetic stays total.
 pub fn Cmyk::of(c : Double, m : Double, y : Double, k : Double) -> Cmyk {
   { c, m, y, k, }
 }
 
 ///|
+/// The colour as four inks: the arithmetic conversion, through sRGB, taking as
+/// much key as the colour allows. Black is all key, and a white has none.
+///
+/// This is the inverse of `Cmyk::to_color` for the colour but not for the inks —
+/// the note on `Cmyk` says why, and the platform test that reads it back says it
+/// in numbers.
 pub fn Color::to_cmyk(self : Color) -> Cmyk {
   let (r, g, b) = self.to_srgb().components()
   let (r, g, b) = (

@@ -9,8 +9,7 @@ const state = { hue: 210, sat: 60, light: 45 };
 const el = (id) => document.getElementById(id);
 const dial = el("dial");
 const wheel = el("wheel");
-const hub = el("hub");
-const puck = el("puck");
+const chip = el("chip");
 const input = el("css");
 const valueText = el("value");
 const swatch = el("swatch");
@@ -22,6 +21,10 @@ const satOut = el("satOut");
 const lightOut = el("lightOut");
 
 const root = document.documentElement;
+
+// Which saturation and lightness the ring was last painted for. Declared here
+// rather than beside the function because `start()` runs before either.
+let ringKey = "";
 
 if (!engine) {
   const warn = document.createElement("p");
@@ -42,12 +45,24 @@ function css() {
 // The wheel turns under a fixed read head: the hue at the head is (360 - rotation).
 function paintWheel() {
   wheel.style.transform = `rotate(${-state.hue}deg)`;
-  // The puck rides the head; its distance from the hub is the saturation. The
-  // hub is 44% wide, so the rim of it sits 22% from the centre, and the rim of
-  // the well 44%.
-  puck.style.top = `${28 - 22 * (state.sat / 100)}%`;
   dial.setAttribute("aria-valuenow", String(state.hue));
   dial.setAttribute("aria-valuetext", `${state.hue} degrees`);
+}
+
+// The ring is a scale, not a decoration: it shows what this saturation and
+// lightness actually look like around the hue circle, computed by the library.
+// At 0% it is grey, at 100% the full sweep — which is the truthful thing for a
+// device to show.
+function paintRing() {
+  const stops = [];
+  for (let step = 0; step < 24; step++) {
+    const hue = step * 15;
+    const facts = JSON.parse(engine.facts(`hsl(${hue} ${state.sat}% ${state.light}%)`));
+    if (facts.ok) stops.push(`${facts.shortest} ${hue}deg`);
+  }
+  if (stops.length === 24) {
+    wheel.style.background = `conic-gradient(from 0deg, ${stops.join(", ")}, ${stops[0]})`;
+  }
 }
 
 function show(facts) {
@@ -60,8 +75,7 @@ function show(facts) {
   // The plate shows what a screen would show: the colour itself when it fits,
   // and the gamut-mapped one when it does not, which is what the label says.
   swatch.style.background = facts.gamut.srgb ? facts.shortest : facts.gamut.mapped;
-  hub.style.background = facts.hex;
-  hub.style.color = ink;
+  chip.style.background = facts.hex;
   el("hubDeg").textContent = `${state.hue}°`;
   el("hubCode").textContent = facts.hex;
 
@@ -111,6 +125,11 @@ function start() {
     sat.value = String(state.sat);
     light.value = String(state.light);
     paintWheel();
+    const key = `${state.sat}/${state.light}`;
+    if (key !== ringKey) {
+      ringKey = key;
+      paintRing();
+    }
     const facts = JSON.parse(engine.facts(css()));
     if (!facts.ok) return;
     show(facts);

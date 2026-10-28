@@ -1,0 +1,10 @@
+// The guide's code, as one program: `moon run src/examples/guide`.
+//
+// Every listing in `docs/guide.html` is a piece of this file, and the output
+// printed under it was produced by running this file — `scripts/guide.py`
+// collects the transcript and writes it into the page.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonrgba",
+}

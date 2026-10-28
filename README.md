@@ -1,5 +1,12 @@
 # moonrgba
 
+[Home](https://moonbitstack.github.io/moonrgba/) ·
+[Guide](https://moonbitstack.github.io/moonrgba/guide.html) ·
+[API](https://moonbitstack.github.io/moonrgba/api.html) ·
+[mooncakes](https://mooncakes.io/docs/moonbitstack/moonrgba)
+
+---
+
 Colour for MoonBit: the syntax CSS writes a colour in, the spaces it can be
 measured in, and the arithmetic a theme, a chart or a terminal needs to get from
 one to the other.
