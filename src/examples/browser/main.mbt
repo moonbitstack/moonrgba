@@ -194,11 +194,12 @@ pub fn slice(lightness : Double) -> String {
   for edge in edges {
     chroma.push(Json(round(edge, 10000.0)))
   }
-  // Ten rings, outermost first. Six left the steps visible as contours; ten is
-  // where the surface reads as a surface and still costs one screen of fills.
+  // Twenty-four rings, outermost first. Fewer leave the steps visible as
+  // contours; more would not be visible and would cost the whole budget of a
+  // frame every time the lightness slider moves.
   let bands : Array[Json] = []
-  for band in 0..<10 {
-    let share = 1.0 - band.to_double() / 10.0
+  for band in 0..<24 {
+    let share = 1.0 - band.to_double() / 24.0
     let row : Array[Json] = []
     for step in 0..<180 {
       let hue = step.to_double() * 2.0
