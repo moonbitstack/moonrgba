@@ -1,0 +1,11 @@
+// Glue for the documentation site: the library compiled to JavaScript, with a
+// single function that answers with everything the page shows. Not part of the
+// library's published surface and not in the API reference.
+import {
+  "moonbitlang/core/math",
+  "moonbitstack/moonrgba",
+}
+
+options(
+  link: { "js": { "exports": [ "facts" ], "format": "esm" } },
+)

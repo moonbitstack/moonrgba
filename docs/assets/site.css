@@ -1,0 +1,1110 @@
+/* moonrgba — the board.
+ *
+ * One warm grey surface, a light from the top left, and the colour under
+ * inspection as the only saturated thing on the page. Depth is carried by two
+ * shadows rather than by borders, so the controls read as parts of one moulded
+ * panel instead of as boxes drawn on a background.
+ *
+ * Type does the other half: a soft serif for the headings, a neutral sans for
+ * prose, and a mono for every number the library produced.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* The surface: bone, not white. Neumorphism needs room above the base for
+     the highlight to sit in. */
+  --desk: #d5cfc2;
+  --bone: #eae6dd;
+  --bone-2: #e2ddd2;
+  --hi: #fffdf8;
+  --lo: #a79e8c;
+
+  --ink: #2b2721;
+  --ink-2: #6d675c;
+  --ink-3: #918a7c;
+  --line: color-mix(in srgb, var(--ink) 12%, transparent);
+  --line-soft: color-mix(in srgb, var(--ink) 7%, transparent);
+
+  --r-xs: 8px;
+  --r-s: 12px;
+  --r-m: 20px;
+  --r-l: 30px;
+  --r-xl: 44px;
+
+  --out-sm: 4px 4px 10px -2px color-mix(in srgb, var(--lo) 70%, transparent),
+    -3px -3px 8px -2px color-mix(in srgb, var(--hi) 95%, transparent);
+  --out: 14px 14px 28px -10px color-mix(in srgb, var(--lo) 85%, transparent),
+    -10px -10px 24px -8px color-mix(in srgb, var(--hi) 98%, transparent);
+  --out-lg: 30px 34px 60px -22px color-mix(in srgb, var(--lo) 82%, transparent),
+    -26px -26px 56px -24px var(--hi);
+  --in-sm: inset 2px 2px 5px -1px color-mix(in srgb, var(--lo) 60%, transparent),
+    inset -2px -2px 5px -1px color-mix(in srgb, var(--hi) 90%, transparent);
+  --in: inset 7px 7px 16px -4px color-mix(in srgb, var(--lo) 72%, transparent),
+    inset -6px -6px 14px -4px color-mix(in srgb, var(--hi) 95%, transparent);
+
+  --sans: "Instrument Sans", system-ui, sans-serif;
+  --serif: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --swatch: #2e73b8;
+  --swatch-ink: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --desk: #1b1d20;
+    --bone: #24272b;
+    --bone-2: #202327;
+    --hi: color-mix(in srgb, #fff 14%, transparent);
+    --lo: #0a0b0c;
+    --ink: #e9e5dc;
+    --ink-2: #a7a294;
+    --ink-3: #7c776c;
+    --line: color-mix(in srgb, var(--ink) 14%, transparent);
+    --line-soft: color-mix(in srgb, var(--ink) 8%, transparent);
+    --out-sm: 4px 4px 10px -2px color-mix(in srgb, var(--lo) 80%, transparent),
+      -3px -3px 8px -2px color-mix(in srgb, var(--hi) 60%, transparent);
+    --out: 12px 12px 26px -8px color-mix(in srgb, var(--lo) 85%, transparent),
+      -10px -10px 24px -8px color-mix(in srgb, var(--hi) 55%, transparent);
+    --out-lg: 26px 26px 54px -18px color-mix(in srgb, var(--lo) 90%, transparent),
+      -22px -22px 48px -20px color-mix(in srgb, var(--hi) 45%, transparent);
+    --in-sm: inset 2px 2px 5px -1px color-mix(in srgb, var(--lo) 85%, transparent),
+      inset -2px -2px 5px -1px color-mix(in srgb, var(--hi) 55%, transparent);
+    --in: inset 7px 7px 16px -4px color-mix(in srgb, var(--lo) 90%, transparent),
+      inset -6px -6px 14px -4px color-mix(in srgb, var(--hi) 50%, transparent);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Code is read to be typed: no ligatures, here or in any control. */
+  font-variant-ligatures: no-contextual;
+  -webkit-text-size-adjust: 100%;
+}
+
+html,
+button,
+input,
+textarea,
+select {
+  font-variant-ligatures: no-contextual;
+}
+
+body {
+  margin: 0;
+  background: var(--desk);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* A matte finish: a few percent of noise over everything, so the shadows sit on
+   a surface rather than on a flat fill. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+}
+
+::selection {
+  background: color-mix(in srgb, var(--swatch) 30%, transparent);
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent);
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--swatch) 70%, var(--ink));
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Chrome ignores ::-webkit-scrollbar once scrollbar-color is set, so the
+   standard properties go behind a guard that only the others match. */
+.scroll,
+.spellings,
+pre {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 28%, transparent) transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .scroll,
+  .spellings,
+  pre {
+    scrollbar-color: color-mix(in srgb, var(--ink) 30%, transparent) transparent;
+  }
+}
+
+@supports selector(::-webkit-scrollbar) {
+  .scroll::-webkit-scrollbar,
+  .spellings::-webkit-scrollbar,
+  pre::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .scroll::-webkit-scrollbar-track,
+  .spellings::-webkit-scrollbar-track,
+  pre::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scroll::-webkit-scrollbar-thumb,
+  .spellings::-webkit-scrollbar-thumb,
+  pre::-webkit-scrollbar-thumb {
+    border-radius: 99px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    background-color: color-mix(in srgb, var(--ink) 26%, transparent);
+  }
+  .scroll::-webkit-scrollbar-thumb:hover,
+  .spellings::-webkit-scrollbar-thumb:hover,
+  pre::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--ink) 42%, transparent);
+  }
+}
+
+.wrap {
+  width: min(1180px, 100% - 2.5rem);
+  margin-inline: auto;
+}
+
+/* ——— header ——————————————————————————————————————————————— */
+
+.site {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding: 1.6rem 0 1.1rem;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  text-decoration: none;
+}
+
+.brand b {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.28rem;
+  letter-spacing: -0.015em;
+  font-variation-settings: "opsz" 32;
+}
+
+.brand small {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.top a {
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  text-decoration: none;
+  padding: 0.45rem 0.7rem;
+  border-radius: 99px;
+}
+
+.top a:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--hi) 55%, transparent);
+  box-shadow: var(--out-sm);
+}
+
+/* The icon button keeps its own padding, so the glyph is never squeezed. */
+.top .gh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  box-shadow: var(--out-sm);
+}
+
+.top .gh svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+/* ——— the board ———————————————————————————————————————————— */
+
+.board {
+  position: relative;
+  margin-block: 1.4rem 2.2rem;
+  padding: clamp(1.6rem, 3.4vw, 3rem);
+  border-radius: var(--r-xl);
+  background:
+    linear-gradient(148deg, color-mix(in srgb, var(--hi) 22%, transparent), transparent 46%),
+    var(--bone);
+  box-shadow: var(--out-lg);
+}
+
+/* The hairline that makes the panel read as moulded rather than pasted. */
+.board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--hi) 65%, transparent);
+  mask-image: linear-gradient(148deg, #000 0 40%, transparent 70%);
+}
+
+.eyebrow {
+  margin: 0 0 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-variation-settings: "opsz" 100;
+  font-size: clamp(2.3rem, 5.2vw, 4.2rem);
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+h1 em {
+  font-style: italic;
+  font-variation-settings: "opsz" 100;
+  color: color-mix(in srgb, var(--swatch) 72%, var(--ink));
+}
+
+.board-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.04fr) minmax(0, 0.96fr);
+  gap: clamp(1.2rem, 4vw, 4.5rem);
+  align-items: end;
+}
+
+.lede {
+  margin: 0 0 0.35rem;
+  max-width: 52ch;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.62;
+  text-wrap: pretty;
+}
+
+.lede b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.bench {
+  display: grid;
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+  gap: clamp(1.6rem, 3.6vw, 3.4rem);
+  align-items: center;
+  margin-top: clamp(1.8rem, 3.6vw, 2.8rem);
+}
+
+/* ——— the dial ————————————————————————————————————————————— */
+
+.dial {
+  position: relative;
+  width: min(100%, 420px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  border-radius: 50%;
+  padding: 14px;
+  background: var(--bone);
+  box-shadow: var(--out);
+  touch-action: none;
+  cursor: grab;
+}
+
+.dial:active {
+  cursor: grabbing;
+}
+
+/* The well the wheel sits in: sunken, with the rim catching the light. */
+.dial .well {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--bone-2);
+  box-shadow: var(--in);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.wheel {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, #fff 0%, #ffffff00 72%),
+    conic-gradient(
+      from 0deg,
+      #f00,
+      #ff0,
+      #0f0,
+      #0ff,
+      #00f,
+      #f0f,
+      #f00
+    );
+  will-change: transform;
+}
+
+/* Twelve ticks, etched into the rim. */
+.rim {
+  position: absolute;
+  inset: 5%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--ink) 22%, transparent) 0deg 0.5deg,
+    transparent 0.5deg 30deg
+  );
+  mask-image: radial-gradient(closest-side, transparent 92%, #000 92.5%, #000 100%);
+}
+
+/* The read head: a fixed line from the hub to the rim, at twelve o'clock. */
+.head {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  bottom: 50%;
+  width: 1px;
+  translate: -0.5px 0;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--ink) 58%, transparent),
+    color-mix(in srgb, var(--ink) 12%, transparent)
+  );
+  pointer-events: none;
+}
+
+.head::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  translate: -50% 0;
+  width: 0;
+  height: 0;
+  border-inline: 6px solid transparent;
+  border-top: 8px solid color-mix(in srgb, var(--ink) 62%, transparent);
+}
+
+/* The puck rides the read head; its height is the saturation. */
+.puck {
+  position: absolute;
+  left: 50%;
+  top: 6%;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: var(--bone);
+  box-shadow: var(--out-sm), inset 0 0 0 3px var(--swatch);
+  pointer-events: none;
+  transition: top 90ms linear;
+}
+
+.hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--swatch);
+  color: var(--swatch-ink);
+  display: grid;
+  place-content: center;
+  gap: 0.15rem;
+  text-align: center;
+  box-shadow:
+    0 10px 26px -12px color-mix(in srgb, var(--swatch) 80%, transparent),
+    var(--out);
+  pointer-events: none;
+}
+
+.hub .deg {
+  font-family: var(--mono);
+  font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hub .code {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
+}
+
+/* ——— the card ————————————————————————————————————————————— */
+
+.card {
+  border-radius: var(--r-l);
+  padding: clamp(1.1rem, 2vw, 1.5rem);
+  background: var(--bone);
+  box-shadow: var(--out);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.8rem 0.55rem 0.9rem;
+  border-radius: var(--r-s);
+  background: var(--bone-2);
+  box-shadow: var(--in-sm);
+  transition: box-shadow 140ms ease;
+}
+
+.field:has(input:focus-visible) {
+  box-shadow: var(--in-sm), 0 0 0 3px color-mix(in srgb, var(--swatch) 28%, transparent);
+}
+
+.field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  padding: 0.15rem 0;
+}
+
+.field input:focus {
+  outline: none;
+}
+
+.field input::placeholder {
+  color: var(--ink-3);
+}
+
+.field .tag {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.swatch {
+  position: relative;
+  margin-top: 0.9rem;
+  height: clamp(132px, 15vw, 176px);
+  border-radius: var(--r-m);
+  background: var(--swatch);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 30%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, #000 12%, transparent),
+    0 16px 30px -18px color-mix(in srgb, var(--swatch) 85%, transparent);
+  display: flex;
+  align-items: flex-end;
+  padding: 0.85rem 1rem;
+}
+
+.swatch .label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: #fffdf8;
+  padding: 0.22rem 0.5rem;
+  border-radius: 99px;
+  background: color-mix(in srgb, #000 46%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.swatch .note {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.8rem;
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  padding: 0.22rem 0.5rem;
+  border-radius: 99px;
+  color: #fffdf8;
+  background: color-mix(in srgb, #000 46%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.value {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.05rem;
+}
+
+.value code {
+  font-family: var(--mono);
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.value button {
+  flex: none;
+  border: 0;
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: var(--bone);
+  padding: 0.42rem 0.7rem;
+  border-radius: 99px;
+  box-shadow: var(--out-sm);
+  cursor: pointer;
+}
+
+.value button:active {
+  box-shadow: var(--in-sm);
+}
+
+.value button[data-done="1"] {
+  color: color-mix(in srgb, var(--swatch) 60%, var(--ink));
+}
+
+.pairs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.pair {
+  border-radius: var(--r-s);
+  padding: 0.55rem 0.7rem;
+  background: var(--bone);
+  box-shadow: var(--out-sm);
+  display: grid;
+  gap: 0.1rem;
+}
+
+.pair .k {
+  font-family: var(--mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.pair .v {
+  font-family: var(--mono);
+  font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.pair .v b {
+  font-weight: 500;
+}
+
+.pair .v span {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+}
+
+.pair .s {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+.terminal {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+
+.terminal b {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.25rem;
+  border-radius: 6px;
+  background: var(--bone);
+  box-shadow: var(--out-sm);
+}
+
+.chip i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--slot, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 15%, transparent);
+}
+
+/* ——— sliders —————————————————————————————————————————————— */
+
+.sliders {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: 3.4rem minmax(0, 1fr) 2.6rem;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.slider label {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.slider output {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  text-align: right;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 26px;
+  background: none;
+  margin: 0;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 99px;
+  background: var(--bone-2);
+  box-shadow: var(--in-sm);
+}
+
+input[type="range"]::-moz-range-track {
+  height: 10px;
+  border-radius: 99px;
+  background: var(--bone-2);
+  box-shadow: var(--in-sm);
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--bone);
+  box-shadow: var(--out-sm), inset 0 0 0 2px var(--swatch);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bone);
+  box-shadow: var(--out-sm), inset 0 0 0 2px var(--swatch);
+}
+
+/* ——— sections below the board ————————————————————————————— */
+
+section {
+  margin-block: clamp(2.6rem, 5vw, 4.4rem);
+}
+
+.sec-head {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr);
+  gap: 0.3rem 1.4rem;
+  align-items: start;
+  margin-bottom: 1.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.sec-head .index {
+  grid-row: span 2;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  padding-top: 0.35rem;
+}
+
+h2 {
+  margin: 0;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-variation-settings: "opsz" 48;
+  font-size: clamp(1.45rem, 2.6vw, 2rem);
+  letter-spacing: -0.02em;
+}
+
+.sec-head p {
+  grid-column: 2;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.94rem;
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+/* The ledger: flat rows with hairline rules, deliberately not cards. */
+.ledger {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 2.6rem;
+}
+
+.ledger .col > div {
+  border-top: 1px solid var(--line);
+}
+
+.ledger .col > .eyebrow {
+  margin-bottom: 0.2rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 8.6rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.62rem 0.2rem;
+  border-bottom: 1px solid var(--line-soft);
+  min-width: 0;
+}
+
+#spellings .row {
+  grid-template-columns: 10.2rem minmax(0, 1fr);
+}
+
+.row .name {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.01em;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+.row .data {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.row:hover .name {
+  color: var(--ink-2);
+}
+
+/* Shapes: a strip of the syntaxes the library reads. */
+.shapes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.shape {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  padding: 0.35rem 0.62rem;
+  border-radius: 99px;
+  background: var(--bone);
+  box-shadow: var(--out-sm);
+  white-space: nowrap;
+}
+
+.shape[data-live="1"] {
+  color: var(--ink);
+  box-shadow: var(--out-sm), inset 0 0 0 1px color-mix(in srgb, var(--swatch) 45%, transparent);
+}
+
+/* Features */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.feature {
+  border-radius: var(--r-m);
+  padding: 1.15rem 1.2rem 1.25rem;
+  background: var(--bone);
+  box-shadow: var(--out);
+}
+
+.feature svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  margin-bottom: 0.7rem;
+  color: color-mix(in srgb, var(--swatch) 55%, var(--ink-2));
+}
+
+.feature h3 {
+  margin: 0 0 0.3rem;
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 0.98rem;
+  letter-spacing: -0.005em;
+}
+
+.feature p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+/* Code, with the numbers the library actually prints. */
+.sample {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: stretch;
+}
+
+pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--r-m);
+  background: var(--bone-2);
+  box-shadow: var(--in);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  line-height: 1.75;
+  white-space: pre;
+  color: var(--ink);
+  tab-size: 2;
+}
+
+pre .c {
+  color: var(--ink-3);
+}
+
+pre .k {
+  color: color-mix(in srgb, var(--swatch) 55%, var(--ink));
+}
+
+.notes {
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.notes p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+}
+
+.notes b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* Key numbers: timeless ones only. */
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  width: min(820px, 100%);
+  margin: 2.4rem auto 0;
+  border-radius: var(--r-m);
+  overflow: hidden;
+  background: var(--line-soft);
+  box-shadow: var(--in-sm);
+}
+
+.numbers div {
+  background: var(--bone);
+  padding: 0.9rem 1.2rem 1.05rem;
+}
+
+.numbers b {
+  display: block;
+  font-family: var(--serif);
+  font-weight: 600;
+  font-variation-settings: "opsz" 60;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.numbers span {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  letter-spacing: 0.01em;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.4rem;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 2.2rem 0 3rem;
+  border-top: 1px solid var(--line);
+  color: var(--ink-3);
+  font-size: 0.82rem;
+}
+
+footer a {
+  color: var(--ink-2);
+}
+
+.warn {
+  margin: 1rem 0 0;
+  padding: 0.7rem 0.9rem;
+  border-left: 2px solid color-mix(in srgb, #c2410c 70%, var(--ink));
+  border-radius: 0 var(--r-xs) var(--r-xs) 0;
+  background: color-mix(in srgb, var(--bone-2) 80%, transparent);
+  color: var(--ink-2);
+  font-size: 0.86rem;
+}
+
+/* ——— narrow ——————————————————————————————————————————————— */
+
+@media (width <= 980px) {
+  .sample {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .numbers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width <= 620px) {
+  .features {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sec-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sec-head .index {
+    grid-row: auto;
+  }
+  .sec-head p {
+    grid-column: 1;
+  }
+}
+
+@media (width <= 860px) {
+  .bench,
+  .board-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lede {
+    margin-top: 0.4rem;
+  }
+  .dial {
+    width: min(100%, 340px);
+  }
+  .ledger {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .site {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  .top {
+    gap: 0.1rem;
+  }
+  .top a {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (width <= 560px) {
+  .wrap {
+    width: min(1180px, 100% - 1.4rem);
+  }
+  .board {
+    border-radius: var(--r-l);
+  }
+  .row {
+    grid-template-columns: 6.8rem minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+  .pairs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

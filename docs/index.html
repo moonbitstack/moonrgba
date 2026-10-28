@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>moonrgba — colour for MoonBit</title>
+<meta name="description" content="Read and write every colour CSS defines, convert between seventeen colour spaces, map a colour into a gamut, mix it, measure it, and find its nearest terminal slot. A colour library for MoonBit.">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="site wrap">
+  <a class="brand" href="./"><b>moonrgba</b><small>colour for MoonBit</small></a>
+  <nav class="top">
+    <a href="#dossier">Spaces</a>
+    <a href="#reads">Reading</a>
+    <a href="#code">Code</a>
+    <a class="gh" href="https://github.com/moonbitstack/moonrgba" aria-label="Source on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.88.87 2.34.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+    </a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <!-- The board: one surface, two shadows, and the colour as the only saturated
+       thing on it. -->
+  <section class="board" id="top">
+    <p class="eyebrow">CSS Color 4 · CSS Color 5 · MoonBit</p>
+    <div class="board-head">
+      <h1>Turn the wheel.<br>Read the <em>colour</em>.</h1>
+      <p class="lede">
+        <b>moonrgba</b> is a colour library for MoonBit. It reads the colours CSS writes,
+        converts between seventeen spaces, brings a colour into a gamut, mixes and measures
+        it, and finds its nearest terminal slot. Every number on this board comes from the
+        compiled library, running in this page.
+      </p>
+    </div>
+
+    <div class="bench">
+
+      <div class="dial" id="dial" tabindex="0" role="slider" aria-label="Hue"
+           aria-valuemin="0" aria-valuemax="359" aria-valuenow="210" aria-valuetext="210 degrees">
+        <div class="well">
+          <div class="wheel" id="wheel"></div>
+          <div class="rim"></div>
+          <div class="head"></div>
+          <div class="puck" id="puck"></div>
+          <div class="hub" id="hub">
+            <span class="deg" id="hubDeg">210°</span>
+            <span class="code" id="hubCode">#2e73b8</span>
+          </div>
+        </div>
+      </div>
+
+      <article class="card">
+        <label class="field" for="css">
+          <span class="tag">css</span>
+          <input id="css" value="hsl(210 60% 45%)" spellcheck="false" autocomplete="off"
+                 aria-label="A CSS colour" placeholder="oklch(0.7 0.15 200)">
+        </label>
+
+        <div class="swatch" id="swatch">
+          <span class="note" id="note">outside sRGB</span>
+          <span class="label" id="swatchLabel">sRGB</span>
+        </div>
+
+        <div class="value">
+          <code id="value">hsl(210 60% 45%)</code>
+          <button id="copy" type="button">copy</button>
+        </div>
+
+        <div class="pairs">
+          <div class="pair">
+            <span class="k">on white</span>
+            <span class="v"><b id="wcagWhite">4.95</b><span>:1</span></span>
+            <span class="s">APCA Lc <i id="apcaWhite">73.9</i></span>
+          </div>
+          <div class="pair">
+            <span class="k">on black</span>
+            <span class="v"><b id="wcagBlack">4.25</b><span>:1</span></span>
+            <span class="s">APCA Lc <i id="apcaBlack">−27.8</i></span>
+          </div>
+        </div>
+
+        <div class="terminal">
+          <span class="chip"><i id="ansiDot"></i><b id="ansi16">cyan</b></span>
+          <span>256 <b id="ansi256">31</b></span>
+          <span>true <b id="rgb8">46, 115, 184</b></span>
+        </div>
+
+        <div class="sliders">
+          <div class="slider">
+            <label for="sat">sat</label>
+            <input id="sat" type="range" min="0" max="100" step="1" value="60">
+            <output id="satOut" for="sat">60%</output>
+          </div>
+          <div class="slider">
+            <label for="light">light</label>
+            <input id="light" type="range" min="0" max="100" step="1" value="45">
+            <output id="lightOut" for="light">45%</output>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- The numbers a reader can trust not to age: how many of each thing the
+       library knows, not how many tests it passed. -->
+  <div class="numbers">
+    <div><b>148</b><span>named colours</span></div>
+    <div><b>17</b><span>colour spaces</span></div>
+    <div><b>4</b><span>colour differences</span></div>
+    <div><b>2</b><span>contrast measures</span></div>
+  </div>
+
+  <!-- The dossier: the same colour written every way, and its components in
+       every space. Flat rows and hairlines, so the data stays the loudest thing. -->
+  <section id="dossier">
+    <div class="sec-head">
+      <span class="index">01</span>
+      <h2>One colour, every way</h2>
+      <p>Paste another value in the field above, or drag the dial, and both columns follow.
+         A cell that reads <code>none</code> is a component the colour does not have — a grey
+         has no hue, and the library says so rather than inventing a number.</p>
+    </div>
+
+    <div class="ledger">
+      <div class="col">
+        <p class="eyebrow">as CSS</p>
+        <div id="spellings">
+          <div class="row"><span class="name">hex</span><span class="data">#2e73b8</span></div>
+          <div class="row"><span class="name">rgb</span><span class="data">rgb(45.9 114.75 183.6)</span></div>
+          <div class="row"><span class="name">hsl</span><span class="data">hsl(210 60% 45%)</span></div>
+          <div class="row"><span class="name">hwb</span><span class="data">hwb(210 18% 28%)</span></div>
+          <div class="row"><span class="name">lab</span><span class="data">lab(46.61867 -3.51425 -43.38625)</span></div>
+          <div class="row"><span class="name">lch</span><span class="data">lch(46.61867 43.52834 265.3692)</span></div>
+          <div class="row"><span class="name">oklab</span><span class="data">oklab(0.54533 -0.04081 -0.1211)</span></div>
+          <div class="row"><span class="name">oklch</span><span class="data">oklch(0.54533 0.12779 251.37887)</span></div>
+          <div class="row"><span class="name">color(srgb)</span><span class="data">hsl(210 60% 45%)</span></div>
+          <div class="row"><span class="name">color(display-p3)</span><span class="data">color(display-p3 0.25445 0.44408 0.6994)</span></div>
+          <div class="row"><span class="name">color(rec2020)</span><span class="data">color(rec2020 0.37324 0.47107 0.71208)</span></div>
+          <div class="row"><span class="name">color(a98-rgb)</span><span class="data">color(a98-rgb 0.29468 0.44754 0.70555)</span></div>
+          <div class="row"><span class="name">color(prophoto-rgb)</span><span class="data">color(prophoto-rgb 0.3325 0.36771 0.62842)</span></div>
+          <div class="row"><span class="name">color(xyz-d65)</span><span class="data">color(xyz-d65 0.15833 0.16226 0.47427)</span></div>
+          <div class="row"><span class="name">color(xyz-d50)</span><span class="data">color(xyz-d50 0.14584 0.1573 0.35757)</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <p class="eyebrow">components</p>
+        <div id="spaces">
+          <div class="row"><span class="name">srgb</span><span class="data">0.18 0.45 0.72</span></div>
+          <div class="row"><span class="name">srgb-linear</span><span class="data">0.027212 0.170645 0.477</span></div>
+          <div class="row"><span class="name">hsl</span><span class="data">210 60% 45%</span></div>
+          <div class="row"><span class="name">hsv</span><span class="data">210 75% 72%</span></div>
+          <div class="row"><span class="name">hwb</span><span class="data">210 18% 28%</span></div>
+          <div class="row"><span class="name">lab</span><span class="data">46.618672 -3.514246 -43.386247</span></div>
+          <div class="row"><span class="name">lch</span><span class="data">46.618672 43.528339 265.369204</span></div>
+          <div class="row"><span class="name">oklab</span><span class="data">0.545329 -0.040806 -0.121104</span></div>
+          <div class="row"><span class="name">oklch</span><span class="data">0.545329 0.127794 251.378874</span></div>
+          <div class="row"><span class="name">xyz-d65</span><span class="data">0.158331 0.162262 0.47427</span></div>
+          <div class="row"><span class="name">xyz-d50</span><span class="data">0.145839 0.157303 0.357571</span></div>
+          <div class="row"><span class="name">display-p3</span><span class="data">0.254452 0.444081 0.699402</span></div>
+          <div class="row"><span class="name">rec2020</span><span class="data">0.373241 0.471073 0.712083</span></div>
+          <div class="row"><span class="name">a98-rgb</span><span class="data">0.294675 0.447536 0.705552</span></div>
+          <div class="row"><span class="name">prophoto-rgb</span><span class="data">0.332501 0.367713 0.628422</span></div>
+          <div class="row"><span class="name">cmyk</span><span class="data">75% 37.5% 0% 28%</span></div>
+          <div class="row"><span class="name">ycbcr-709</span><span class="data">0.412092 0.165934 -0.147379</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What the reader is allowed to type. -->
+  <section id="reads">
+    <div class="sec-head">
+      <span class="index">02</span>
+      <h2>What it reads</h2>
+      <p>The parser takes one value — what would sit on the right of <code>color:</code> —
+         and reads it the way a browser would, including the argument list it belongs to.</p>
+    </div>
+
+    <div class="shapes">
+      <span class="shape">#rgb · #rgba · #rrggbb · #rrggbbaa</span>
+      <span class="shape">rgb() · rgba()</span>
+      <span class="shape">hsl() · hsla()</span>
+      <span class="shape">hwb()</span>
+      <span class="shape">lab() · lch()</span>
+      <span class="shape">oklab() · oklch()</span>
+      <span class="shape">color()</span>
+      <span class="shape">the 148 names</span>
+      <span class="shape">transparent</span>
+      <span class="shape">currentcolor</span>
+    </div>
+
+    <div class="features" style="margin-top:1.6rem">
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h13"/><path d="M20 12l-3-3m3 3l-3 3"/></svg>
+        <h3>Two grammars, not one</h3>
+        <p>The comma list and the space list are different grammars with different rules.
+           The first separator decides which one is being read, and that one's rules apply
+           to everything after it.</p>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="9" cy="9" r="5"/><circle cx="15" cy="15" r="5"/></svg>
+        <h3>Seventeen spaces</h3>
+        <p>sRGB and its linear twin, HSL, HSV, HWB, Lab, LCh, Oklab, OkLCh, Display P3,
+           Rec. 2020, Adobe RGB, ProPhoto, both XYZ, CMYK and YCbCr — two hubs, no drift.</p>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 7h10a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h12"/><circle cx="18" cy="7" r="3"/></svg>
+        <h3>Into a gamut, by chroma</h3>
+        <p>A colour a screen cannot show loses chroma in OkLCh until it fits. Clipping is
+           the cheaper answer and the library keeps it, but it is not the default.</p>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 3v18M5 8h14M5 16h14"/><circle cx="12" cy="12" r="9"/></svg>
+        <h3>Mixing and measuring</h3>
+        <p>color-mix with its four hue directions and premultiplied alpha, WCAG 2 and APCA
+           contrast, and four colour differences that do not pretend to be each other.</p>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9l3 3-3 3M12.5 15H17"/></svg>
+        <h3>A terminal's palette</h3>
+        <p>The nearest named colour, the nearest slot of the 256, and the three bytes of
+           true colour — chosen by OkLab distance, because the palette is uneven.</p>
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M4 20V8m0 0l4 4m-4-4L0 12" transform="translate(4)"/><path d="M14 20V4m0 16l4-4m-4 4l-4-4"/></svg>
+        <h3>No I/O, four backends</h3>
+        <p>Every function is a pure conversion. Nothing here reads a file, opens a socket
+           or asks a display anything; the same code runs on all four targets.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- The library in its own language, with the output it actually prints. -->
+  <section id="code">
+    <div class="sec-head">
+      <span class="index">03</span>
+      <h2>In MoonBit</h2>
+      <p>Seven calls, and the values they return. The trailing comments are the output of
+         these exact lines, not an illustration.</p>
+    </div>
+
+    <div class="sample">
+      <pre><code><span class="k">let</span> brand = @moonrgba.Color::decode("#0891b2")
+
+brand.to_oklch().encode()                            <span class="c">// oklch(0.60891 0.11094 221.72312)</span>
+brand.contrast(@moonrgba.Color::white())             <span class="c">// 3.6820433648230324</span>
+brand.to_ansi16()                                    <span class="c">// cyan</span>
+brand.to_ansi256().code()                            <span class="c">// 31</span>
+
+@moonrgba.Color::decode("rebeccapurple").encode()    <span class="c">// #639</span>
+brand.mix(@moonrgba.Color::white(),
+  space=@moonrgba.Space::Oklch).encode()             <span class="c">// oklch(0.80446 0.05547 221.72312)</span></code></pre>
+
+      <div class="notes">
+        <p><b>Reading and writing are one pair.</b> <code>decode</code> takes one value and
+           raises <code>Refused</code>, which says where it stopped and what it wanted;
+           <code>decode_opt</code> is the same reader with the refusal turned into
+           <code>None</code>.</p>
+        <p><b>The writer takes the shortest spelling that reads back unchanged.</b> That is
+           why <code>rebeccapurple</code> comes out as <code>#639</code>: four characters,
+           and the same colour. Where no short form is exact — a channel of 127.5 has no
+           hexadecimal spelling — it writes the longer one instead of rounding the colour
+           away.</p>
+        <p><b>A missing component stays missing.</b> <code>none</code> is carried as a NaN,
+           written back as <code>none</code>, and filled in from the other side when two
+           colours are mixed.</p>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <span>Apache-2.0 · the same code on every target</span>
+  <span><a href="https://github.com/moonbitstack/moonrgba">Source</a> · <a href="https://mooncakes.io/docs/moonbitstack/moonrgba">Package</a></span>
+</footer>
+
+<script type="module" src="assets/home.js"></script>
+</body>
+</html>
