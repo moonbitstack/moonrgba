@@ -1,6 +1,7 @@
-// Everything this repository does, in one run: `moon run src/examples/tour`.
+// A colour read, written, converted and measured: `moon run src/examples/tour`.
 pkgtype(kind: "executable")
 
 import {
-  "moonbitstack/CHANGE-ME",
+  "moonbitlang/core/math",
+  "moonbitstack/moonrgba",
 }

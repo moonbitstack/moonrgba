@@ -1,12 +1,249 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbitstack/CHANGE-ME"
+package "moonbitstack/moonrgba"
+
+import {
+  "moonbitlang/core/debug",
+}
 
 // Values
-pub fn greet(StringView) -> String
+pub fn names_all() -> Array[StringView]
+
+pub fn names_count() -> Int32
 
 // Errors
+pub(all) suberror Refused {
+  Unexpected(at~ : Int32, got~ : String, want~ : String)
+  Unknown(at~ : Int32, got~ : String)
+} derive(Eq, @debug.Debug)
+pub fn Refused::equal(Self, Self) -> Bool
+pub fn Refused::not_equal(Self, Self) -> Bool
+pub fn Refused::output(Self, &Logger) -> Unit
+pub fn Refused::to_repr(Self) -> @debug.Repr
+pub fn Refused::to_string(Self) -> String
+pub impl Show for Refused
 
 // Types and methods
+pub(all) enum Ansi16 {
+  Black
+  Red
+  Green
+  Yellow
+  Blue
+  Magenta
+  Cyan
+  White
+  BrightBlack
+  BrightRed
+  BrightGreen
+  BrightYellow
+  BrightBlue
+  BrightMagenta
+  BrightCyan
+  BrightWhite
+} derive(Eq, @debug.Debug)
+pub fn Ansi16::code(Self) -> Int32
+pub fn Ansi16::color(Self) -> Color
+pub fn Ansi16::equal(Self, Self) -> Bool
+pub fn Ansi16::not_equal(Self, Self) -> Bool
+pub fn Ansi16::of(Int32) -> Self?
+pub fn Ansi16::output(Self, &Logger) -> Unit
+pub fn Ansi16::to_repr(Self) -> @debug.Repr
+pub fn Ansi16::to_string(Self) -> String
+pub impl Show for Ansi16
+
+pub(all) struct Ansi256 {
+  code : Int32
+} derive(Eq, @debug.Debug)
+pub fn Ansi256::code(Self) -> Int32
+pub fn Ansi256::color(Self) -> Color
+pub fn Ansi256::equal(Self, Self) -> Bool
+pub fn Ansi256::not_equal(Self, Self) -> Bool
+pub fn Ansi256::of(Int32) -> Self
+pub fn Ansi256::output(Self, &Logger) -> Unit
+pub fn Ansi256::to_repr(Self) -> @debug.Repr
+pub fn Ansi256::to_string(Self) -> String
+pub impl Show for Ansi256
+
+pub(all) struct Cmyk {
+  c : Double
+  m : Double
+  y : Double
+  k : Double
+} derive(Eq, @debug.Debug)
+pub fn Cmyk::equal(Self, Self) -> Bool
+pub fn Cmyk::not_equal(Self, Self) -> Bool
+pub fn Cmyk::of(Double, Double, Double, Double) -> Self
+pub fn Cmyk::to_color(Self, alpha? : Double) -> Color
+pub fn Cmyk::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Color {
+  space : Space
+  x : Double
+  y : Double
+  z : Double
+  alpha : Double
+} derive(@debug.Debug)
+pub fn Color::a98_rgb(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::apca(Self, Self) -> Double
+pub fn Color::black() -> Self
+pub fn Color::chroma(Self) -> Double
+pub fn Color::clip(Self, space? : Space) -> Self
+pub fn Color::components(Self) -> (Double, Double, Double)
+pub fn Color::contrast(Self, Self) -> Double
+pub fn Color::current() -> Self
+pub fn Color::darken(Self, Double) -> Self
+pub fn Color::decode(StringView) -> Self raise Refused
+pub fn Color::decode_opt(StringView) -> Self?
+pub fn Color::delta_e(Self, Self, delta? : Delta) -> Double
+pub fn Color::desaturate(Self, Double) -> Self
+pub fn Color::display_p3(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::encode(Self, format? : Format) -> String
+pub fn Color::fade(Self, Double) -> Self
+pub fn Color::hsl(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::hsv(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::hue(Self) -> Double
+pub fn Color::hwb(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::in_gamut(Self, space? : Space) -> Bool
+pub fn Color::is_current(Self) -> Bool
+pub fn Color::lab(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::lch(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::lighten(Self, Double) -> Self
+pub fn Color::lightness(Self) -> Double
+pub fn Color::luminance(Self) -> Double
+pub fn Color::mix(Self, Self, space? : Space, hue? : Hue, weight? : Double) -> Self
+pub fn Color::name(Self) -> String?
+pub fn Color::of(Space, Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::of_name(StringView) -> Self?
+pub fn Color::oklab(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::oklch(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::output(Self, &Logger) -> Unit
+pub fn Color::prophoto(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::rec2020(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::resolve(Self, Self) -> Self
+pub fn Color::rgb(Int32, Int32, Int32, alpha? : Double) -> Self
+pub fn Color::rgb8(Self) -> (Int32, Int32, Int32)
+pub fn Color::saturate(Self, Double) -> Self
+pub fn Color::saturation(Self) -> Double
+pub fn Color::srgb(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::srgb_linear(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::to_a98_rgb(Self) -> Self
+pub fn Color::to_ansi16(Self) -> Ansi16
+pub fn Color::to_ansi256(Self) -> Ansi256
+pub fn Color::to_cmyk(Self) -> Cmyk
+pub fn Color::to_display_p3(Self) -> Self
+pub fn Color::to_gamut(Self, space? : Space) -> Self
+pub fn Color::to_hsl(Self) -> Self
+pub fn Color::to_hsv(Self) -> Self
+pub fn Color::to_hwb(Self) -> Self
+pub fn Color::to_lab(Self) -> Self
+pub fn Color::to_lch(Self) -> Self
+pub fn Color::to_oklab(Self) -> Self
+pub fn Color::to_oklch(Self) -> Self
+pub fn Color::to_prophoto(Self) -> Self
+pub fn Color::to_rec2020(Self) -> Self
+pub fn Color::to_repr(Self) -> @debug.Repr
+pub fn Color::to_space(Self, Space) -> Self
+pub fn Color::to_srgb(Self) -> Self
+pub fn Color::to_srgb_linear(Self) -> Self
+pub fn Color::to_string(Self) -> String
+pub fn Color::to_xyz_d50(Self) -> Self
+pub fn Color::to_xyz_d65(Self) -> Self
+pub fn Color::to_ycbcr(Self, luma~ : Luma) -> Self
+pub fn Color::transparent() -> Self
+pub fn Color::white() -> Self
+pub fn Color::with_alpha(Self, Double) -> Self
+pub fn Color::with_components(Self, Double, Double, Double) -> Self
+pub fn Color::xyz_d50(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::xyz_d65(Double, Double, Double, alpha? : Double) -> Self
+pub fn Color::ycbcr(Double, Double, Double, luma? : Luma, alpha? : Double) -> Self
+pub impl Show for Color
+
+pub(all) enum Delta {
+  E76
+  E94
+  E2000
+  Ok
+} derive(Eq, @debug.Debug)
+pub fn Delta::equal(Self, Self) -> Bool
+pub fn Delta::not_equal(Self, Self) -> Bool
+pub fn Delta::output(Self, &Logger) -> Unit
+pub fn Delta::to_repr(Self) -> @debug.Repr
+pub fn Delta::to_string(Self) -> String
+pub impl Show for Delta
+
+pub(all) enum Format {
+  Shortest
+  Hex
+  Rgb
+  Hsl
+  Hwb
+  Lab
+  Lch
+  Oklab
+  Oklch
+  Color
+  Named
+} derive(Eq, @debug.Debug)
+pub fn Format::equal(Self, Self) -> Bool
+pub fn Format::not_equal(Self, Self) -> Bool
+pub fn Format::output(Self, &Logger) -> Unit
+pub fn Format::to_repr(Self) -> @debug.Repr
+pub fn Format::to_string(Self) -> String
+pub impl Show for Format
+
+pub(all) enum Hue {
+  Shorter
+  Longer
+  Increasing
+  Decreasing
+} derive(Eq, @debug.Debug)
+pub fn Hue::equal(Self, Self) -> Bool
+pub fn Hue::not_equal(Self, Self) -> Bool
+pub fn Hue::output(Self, &Logger) -> Unit
+pub fn Hue::to_repr(Self) -> @debug.Repr
+pub fn Hue::to_string(Self) -> String
+pub impl Show for Hue
+
+pub(all) enum Luma {
+  Bt601
+  Bt709
+  Bt2020
+} derive(Eq, @debug.Debug)
+pub fn Luma::equal(Self, Self) -> Bool
+pub fn Luma::not_equal(Self, Self) -> Bool
+pub fn Luma::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Space {
+  Srgb
+  SrgbLinear
+  Hsl
+  Hsv
+  Hwb
+  Lab
+  Lch
+  Oklab
+  Oklch
+  XyzD50
+  XyzD65
+  DisplayP3
+  DisplayP3Linear
+  Rec2020
+  A98Rgb
+  ProPhoto
+  YCbCr(Luma)
+  Current
+} derive(Eq, @debug.Debug)
+pub fn Space::code(Self) -> String
+pub fn Space::equal(Self, Self) -> Bool
+pub fn Space::has_gamut(Self) -> Bool
+pub fn Space::is_polar(Self) -> Bool
+pub fn Space::is_predefined(Self) -> Bool
+pub fn Space::not_equal(Self, Self) -> Bool
+pub fn Space::of(StringView) -> Self?
+pub fn Space::output(Self, &Logger) -> Unit
+pub fn Space::to_repr(Self) -> @debug.Repr
+pub fn Space::to_string(Self) -> String
+pub impl Show for Space
 
 // Type aliases
 

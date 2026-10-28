@@ -1,0 +1,6 @@
+// A theme built from one seed colour: `moon run src/examples/theme`.
+pkgtype(kind: "executable")
+
+import {
+  "moonbitstack/moonrgba",
+}

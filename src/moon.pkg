@@ -1,2 +1,22 @@
-// What this package implements, and a first-hand link to the specification it
-// implements. A package without that link is not finished.
+// Colour values, and the spaces their components are read in.
+//
+// CSS Color 4 and 5:
+// https://www.w3.org/TR/css-color-4/
+// https://www.w3.org/TR/css-color-5/
+//
+// One type holds every space. A colour is three components plus an alpha, and
+// `space` says how to read the three. Keeping one type means a caller can pass
+// a colour around without knowing where it came from, and convert only at the
+// edge where it is painted.
+//
+// Not here: ICC profiles, and anything that needs a display. Converting between
+// the spaces here is arithmetic laid down by the specifications; what a screen
+// then does with the result is the screen's business.
+import {
+  "moonbitlang/core/double",
+  "moonbitlang/core/math",
+}
+
+import {
+  "moonbitlang/core/double",
+} for "test"
