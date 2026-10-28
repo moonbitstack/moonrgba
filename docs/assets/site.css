@@ -1946,3 +1946,12 @@ code {
     margin-inline: auto;
   }
 }
+
+/* A header cell names a column; it is not a value, so it does not wear the code
+   chip's box. */
+.doc-table th code {
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  color: var(--ink-3);
+}
