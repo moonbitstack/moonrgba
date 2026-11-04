@@ -21,6 +21,7 @@
 ///|
 /// The sixteen colours a terminal names, in the order their escape sequences
 /// number them.
+#derive(Eq, Debug)
 pub(all) enum Ansi16 {
   Black
   Red
@@ -38,7 +39,7 @@ pub(all) enum Ansi16 {
   BrightMagenta
   BrightCyan
   BrightWhite
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Ansi16 with Eq::{equal, not_equal}
@@ -148,11 +149,12 @@ pub fn Ansi16::color(self : Ansi16) -> Color {
 ///|
 /// A slot in the 256-colour palette: 0–15 are the named colours, 16–231 a 6×6×6
 /// cube, and 232–255 a grey ramp.
+#derive(Eq, Debug)
 pub(all) struct Ansi256 {
   /// 0–255. Kept in range by `Ansi256::of`; written by hand it is a number a
   /// terminal would mask, so nothing here trusts it to be inside.
   code : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Ansi256 with Eq::{equal, not_equal}

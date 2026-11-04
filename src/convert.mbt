@@ -945,12 +945,13 @@ pub fn Color::to_ycbcr(self : Color, luma~ : Luma) -> Color {
 /// and the three colour inks are not. That means a colour survives the round trip
 /// but its inks may not: `cmyk(0.2 0.4 0.6 0.1)` prints the same colour as
 /// `cmyk(0 0.25 0.5 0.28)`, and only the second comes back.
+#derive(Eq, Debug)
 pub(all) struct Cmyk {
   c : Double
   m : Double
   y : Double
   k : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Cmyk with Eq::{equal, not_equal}

@@ -17,6 +17,7 @@
 
 ///|
 /// Which way round the hue circle an interpolation travels.
+#derive(Eq, Debug)
 pub(all) enum Hue {
   /// The way that is at most half a turn: 350° to 10° goes through 0°.
   Shorter
@@ -26,7 +27,7 @@ pub(all) enum Hue {
   Increasing
   /// Always decreasing.
   Decreasing
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Hue with Eq::{equal, not_equal}

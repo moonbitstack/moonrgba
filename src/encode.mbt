@@ -21,6 +21,7 @@
 
 ///|
 /// How to write a colour out.
+#derive(Eq, Debug)
 pub(all) enum Format {
   /// The shortest spelling the colour's own space allows, falling back to sRGB
   /// for the spaces CSS has no syntax for.
@@ -47,7 +48,7 @@ pub(all) enum Format {
   Color
   /// The name the colour has, or the same string `Hex` would give.
   Named
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Format with Eq::{equal, not_equal}

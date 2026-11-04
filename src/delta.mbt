@@ -15,6 +15,7 @@
 ///|
 /// Which colour difference to measure. The name is the question, not the space:
 /// three of these are computed in Lab and one in Oklab.
+#derive(Eq, Debug)
 pub(all) enum Delta {
   /// CIE76: the Euclidean distance in Lab, which is 1976's answer.
   E76
@@ -25,7 +26,7 @@ pub(all) enum Delta {
   E2000
   /// The Euclidean distance in Oklab, which needs no weights to be even.
   Ok
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Delta with Eq::{equal, not_equal}

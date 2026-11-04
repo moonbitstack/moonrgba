@@ -23,6 +23,7 @@
 /// lightness is 0–1 because that is what `oklab()` writes. A colour out of its
 /// space's range is still a valid value — CSS Color 4 lets a colour be outside
 /// its gamut and leaves clipping to the moment it is painted.
+#derive(Eq, Debug)
 pub(all) enum Space {
   /// Gamma-encoded sRGB, components 0–1. The one space every screen has.
   Srgb
@@ -64,7 +65,7 @@ pub(all) enum Space {
   /// declaration can be read and written back unchanged; resolve it before
   /// converting, with `Color::resolve`.
   Current
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Space with Eq::{equal, not_equal}
@@ -78,6 +79,7 @@ pub extend Space with Debug::{to_repr}
 /// The three differ only in how much of each primary counts as brightness, and
 /// a value converted with the wrong one is visibly off, so the choice is part of
 /// the value rather than a global setting.
+#derive(Eq, Debug)
 pub(all) enum Luma {
   /// BT.601: the coefficients of SD television.
   Bt601
@@ -85,7 +87,7 @@ pub(all) enum Luma {
   Bt709
   /// BT.2020: the coefficients of UHD television, on wider primaries.
   Bt2020
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Luma with Eq::{equal, not_equal}
@@ -104,13 +106,14 @@ pub extend Luma with Debug::{to_repr}
 /// this library carries as a NaN — "this space did not say", which interpolation
 /// then fills in from the other side. Ordinary arithmetic on such a component
 /// gives NaN back, which is the honest answer.
+#derive(Debug)
 pub(all) struct Color {
   space : Space
   x : Double
   y : Double
   z : Double
   alpha : Double
-} derive(Debug)
+}
 
 ///|
 pub extend Color with Debug::{to_repr}

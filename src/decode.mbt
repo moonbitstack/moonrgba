@@ -19,13 +19,14 @@
 
 ///|
 /// Why a string is not a CSS colour.
+#derive(Eq, Debug)
 pub(all) suberror Refused {
   /// The text did not continue the way the syntax required, at this offset.
   Unexpected(at~ : Int32, got~ : String, want~ : String)
   /// A function or keyword that is valid CSS but not a colour this library
   /// knows, at this offset.
   Unknown(at~ : Int32, got~ : String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl Show for Refused with fn output(self, logger) {

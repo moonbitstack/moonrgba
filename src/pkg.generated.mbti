@@ -11,10 +11,11 @@ pub fn names_all() -> Array[StringView]
 pub fn names_count() -> Int32
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror Refused {
   Unexpected(at~ : Int32, got~ : String, want~ : String)
   Unknown(at~ : Int32, got~ : String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Refused::equal(Self, Self) -> Bool
 pub fn Refused::not_equal(Self, Self) -> Bool
 pub fn Refused::output(Self, &Logger) -> Unit
@@ -23,6 +24,7 @@ pub fn Refused::to_string(Self) -> String
 pub impl Show for Refused
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Ansi16 {
   Black
   Red
@@ -40,7 +42,7 @@ pub(all) enum Ansi16 {
   BrightMagenta
   BrightCyan
   BrightWhite
-} derive(Eq, @debug.Debug)
+}
 pub fn Ansi16::code(Self) -> Int32
 pub fn Ansi16::color(Self) -> Color
 pub fn Ansi16::equal(Self, Self) -> Bool
@@ -51,9 +53,10 @@ pub fn Ansi16::to_repr(Self) -> @debug.Repr
 pub fn Ansi16::to_string(Self) -> String
 pub impl Show for Ansi16
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Ansi256 {
   code : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn Ansi256::code(Self) -> Int32
 pub fn Ansi256::color(Self) -> Color
 pub fn Ansi256::equal(Self, Self) -> Bool
@@ -64,25 +67,27 @@ pub fn Ansi256::to_repr(Self) -> @debug.Repr
 pub fn Ansi256::to_string(Self) -> String
 pub impl Show for Ansi256
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Cmyk {
   c : Double
   m : Double
   y : Double
   k : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn Cmyk::equal(Self, Self) -> Bool
 pub fn Cmyk::not_equal(Self, Self) -> Bool
 pub fn Cmyk::of(Double, Double, Double, Double) -> Self
 pub fn Cmyk::to_color(Self, alpha? : Double) -> Color
 pub fn Cmyk::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct Color {
   space : Space
   x : Double
   y : Double
   z : Double
   alpha : Double
-} derive(@debug.Debug)
+}
 pub fn Color::a98_rgb(Double, Double, Double, alpha? : Double) -> Self
 pub fn Color::apca(Self, Self) -> Double
 pub fn Color::black() -> Self
@@ -158,12 +163,13 @@ pub fn Color::xyz_d65(Double, Double, Double, alpha? : Double) -> Self
 pub fn Color::ycbcr(Double, Double, Double, luma? : Luma, alpha? : Double) -> Self
 pub impl Show for Color
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Delta {
   E76
   E94
   E2000
   Ok
-} derive(Eq, @debug.Debug)
+}
 pub fn Delta::equal(Self, Self) -> Bool
 pub fn Delta::not_equal(Self, Self) -> Bool
 pub fn Delta::output(Self, &Logger) -> Unit
@@ -171,6 +177,7 @@ pub fn Delta::to_repr(Self) -> @debug.Repr
 pub fn Delta::to_string(Self) -> String
 pub impl Show for Delta
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Format {
   Shortest
   Hex
@@ -183,7 +190,7 @@ pub(all) enum Format {
   Oklch
   Color
   Named
-} derive(Eq, @debug.Debug)
+}
 pub fn Format::equal(Self, Self) -> Bool
 pub fn Format::not_equal(Self, Self) -> Bool
 pub fn Format::output(Self, &Logger) -> Unit
@@ -191,12 +198,13 @@ pub fn Format::to_repr(Self) -> @debug.Repr
 pub fn Format::to_string(Self) -> String
 pub impl Show for Format
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Hue {
   Shorter
   Longer
   Increasing
   Decreasing
-} derive(Eq, @debug.Debug)
+}
 pub fn Hue::equal(Self, Self) -> Bool
 pub fn Hue::not_equal(Self, Self) -> Bool
 pub fn Hue::output(Self, &Logger) -> Unit
@@ -204,15 +212,17 @@ pub fn Hue::to_repr(Self) -> @debug.Repr
 pub fn Hue::to_string(Self) -> String
 pub impl Show for Hue
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Luma {
   Bt601
   Bt709
   Bt2020
-} derive(Eq, @debug.Debug)
+}
 pub fn Luma::equal(Self, Self) -> Bool
 pub fn Luma::not_equal(Self, Self) -> Bool
 pub fn Luma::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Space {
   Srgb
   SrgbLinear
@@ -232,7 +242,7 @@ pub(all) enum Space {
   ProPhoto
   YCbCr(Luma)
   Current
-} derive(Eq, @debug.Debug)
+}
 pub fn Space::code(Self) -> String
 pub fn Space::equal(Self, Self) -> Bool
 pub fn Space::has_gamut(Self) -> Bool
