@@ -126,6 +126,10 @@ def written() -> tuple[dict[str, str], dict[str, str]]:
                 index += 1
                 continue
 
+            if stripped.startswith("#"):
+                index += 1
+                continue
+
             match = DECL.match(line)
             if match:
                 kind, name = match.group(1), match.group(2)
