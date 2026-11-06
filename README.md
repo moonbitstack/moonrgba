@@ -206,6 +206,7 @@ brand.rgb8()                 // (8, 145, 178)
 ```
 
 The sixteen colours are the ones xterm uses, which is what terminals show.
+`to_ansi256` leaves those sixteen out by default, as chalk, rich and termenv do, because a terminal lets its user re-theme them while the cube and the grey ramp stay put; `named=true` puts them back.
 
 ## The value
 

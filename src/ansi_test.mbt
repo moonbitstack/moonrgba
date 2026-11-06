@@ -67,7 +67,7 @@ test "the 256-colour palette is a cube and a ramp" {
 test "a palette slot is its own nearest match" {
   for code in 0..<256 {
     let slot = @moonrgba.Ansi256::of(code)
-    let nearest = slot.color().to_ansi256()
+    let nearest = slot.color().to_ansi256(named=true)
     // A colour that is in the palette may have more than one slot — black is
     // both 0 and 16 — so the check is that the colour comes back, not the number.
     assert_eq(nearest.color().components(), slot.color().components())
@@ -78,14 +78,15 @@ test "a palette slot is its own nearest match" {
 test "a colour outside the palette lands on the nearest one by Oklab" {
   // Halfway between black and the first grey step is nearer black.
   let near_black = @moonrgba.Color::rgb(4, 4, 4)
-  assert_eq(@moonrgba.Color::rgb(0, 0, 0).to_ansi256().code(), 0)
+  assert_eq(@moonrgba.Color::rgb(0, 0, 0).to_ansi256(named=true).code(), 0)
   assert_true(
-    near_black.to_ansi256().code() < 16 || near_black.to_ansi256().code() == 232,
+    near_black.to_ansi256(named=true).code() < 16 ||
+    near_black.to_ansi256(named=true).code() == 232,
   )
   // A colour a shade off a palette entry picks that entry rather than a
   // neighbour further away in every channel.
   let almost_red = @moonrgba.Color::rgb(250, 4, 4)
-  let slot = almost_red.to_ansi256()
+  let slot = almost_red.to_ansi256(named=true)
   assert_true(slot.code() == 9 || slot.code() == 196, msg="\{slot}")
   // And the two tiers agree about plain red, which both have exactly.
   assert_eq(
@@ -125,4 +126,19 @@ test "a slot outside the palette clamps rather than wrapping" {
   assert_eq(@moonrgba.Ansi256::of(-5).code(), 0)
   assert_eq(@moonrgba.Ansi256::of(300).code(), 255)
   assert_eq(@moonrgba.Ansi256::of(0).code(), 0)
+}
+
+///|
+test "the re-themable sixteen are left out unless asked for" {
+  // Plain red is slot 9 and slot 196 alike; only the cube's is the same on every terminal.
+  assert_eq(@moonrgba.Color::rgb(255, 0, 0).to_ansi256().code(), 196)
+  assert_eq(@moonrgba.Color::rgb(255, 0, 0).to_ansi256(named=true).code(), 9)
+  // Black is 0 and 16; without the named slots it is the cube's corner.
+  assert_eq(@moonrgba.Color::rgb(0, 0, 0).to_ansi256().code(), 16)
+  for code in 16..<256 {
+    let slot = @moonrgba.Ansi256::of(code)
+    assert_true(slot.color().to_ansi256().code() >= 16)
+  }
+  // The dark red of slot 1 is nowhere in the cube, so it lands on a neighbour there.
+  assert_true(@moonrgba.Ansi256::of(1).color().to_ansi256().code() >= 16)
 }

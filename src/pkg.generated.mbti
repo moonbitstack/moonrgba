@@ -133,7 +133,7 @@ pub fn Color::srgb(Double, Double, Double, alpha? : Double) -> Self
 pub fn Color::srgb_linear(Double, Double, Double, alpha? : Double) -> Self
 pub fn Color::to_a98_rgb(Self) -> Self
 pub fn Color::to_ansi16(Self) -> Ansi16
-pub fn Color::to_ansi256(Self) -> Ansi256
+pub fn Color::to_ansi256(Self, named? : Bool) -> Ansi256
 pub fn Color::to_cmyk(Self) -> Cmyk
 pub fn Color::to_display_p3(Self) -> Self
 pub fn Color::to_gamut(Self, space? : Space) -> Self

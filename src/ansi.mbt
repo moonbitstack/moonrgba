@@ -261,11 +261,17 @@ fn squared_distance(
 
 ///|
 /// The slot of the 256-colour palette closest to this colour by ΔE OK.
-pub fn Color::to_ansi256(self : Color) -> Ansi256 {
+///
+/// `named` says whether the first sixteen slots are candidates. They are off by
+/// default, as chalk's `ansi-styles`, rich and termenv leave them out: a terminal
+/// lets its user re-theme those sixteen, so a colour sent through one of them is
+/// whatever the theme says, while the cube and the grey ramp are the same
+/// everywhere. Turn it on to ask which of all 256 is nearest the colour itself.
+pub fn Color::to_ansi256(self : Color, named~ : Bool = false) -> Ansi256 {
   let lab = self.to_oklab().components()
   let mut best = 0
   let mut best_distance = @double.infinity
-  for code in 0..<256 {
+  for code in (if named { 0 } else { 16 })..<256 {
     let distance = squared_distance(lab, palette_lab[code])
     if distance < best_distance {
       best = code

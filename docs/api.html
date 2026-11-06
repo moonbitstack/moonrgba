@@ -693,8 +693,9 @@
 </div>
 <div class="entry" id="Color-to_ansi256">
 <h3><span class="kind">method</span>Color::to_ansi256</h3>
-<pre class="sig">pub fn Color::to_ansi256(self : Color) -&gt; Ansi256</pre>
+<pre class="sig">pub fn Color::to_ansi256(self : Color, named~ : Bool = false) -&gt; Ansi256</pre>
 <p>The slot of the 256-colour palette closest to this colour by ΔE OK.</p>
+<p><code>named</code> says whether the first sixteen slots are candidates. They are off by default, as chalk's <code>ansi-styles</code>, rich and termenv leave them out: a terminal lets its user re-theme those sixteen, so a colour sent through one of them is whatever the theme says, while the cube and the grey ramp are the same everywhere. Turn it on to ask which of all 256 is nearest the colour itself.</p>
 </div>
 <div class="entry" id="Color-rgb8">
 <h3><span class="kind">method</span>Color::rgb8</h3>
