@@ -15,11 +15,14 @@ No I/O, no dependencies, all four backends.
 
 ```moonbit
 let brand = @moonrgba.Color::decode("#0891b2")
-brand.to_oklch().encode()                                  // "oklch(0.60891 0.11094 221.72312)"
-brand.mix(@moonrgba.Color::white(), space=@moonrgba.Space::Oklch).encode()
-                                                           // "oklch(0.80446 0.05547 221.72312)"
-brand.contrast(@moonrgba.Color::white())                   // 3.6820433648230324
-brand.to_ansi256().code()                                  // 31
+let white = @moonrgba.Color::white()
+assert_eq(brand.to_oklch().encode(), "oklch(0.60891 0.11094 221.72312)")
+assert_eq(
+  brand.mix(white, space=Oklch).encode(),
+  "oklch(0.80446 0.05547 221.72312)",
+)
+assert_eq(brand.contrast(white), 3.6820433648230324)
+assert_eq(brand.to_ansi256().code(), 31)
 ```
 
 `moon run src/examples/tour` walks one colour through every space and every
@@ -33,12 +36,12 @@ including both the comma and the space argument lists, `none` for a component
 the author left out, and `currentcolor`.
 
 ```moonbit
-@moonrgba.Color::decode("#123").encode()                   // "#123"
-@moonrgba.Color::decode("rgb(10 20 30 / 50%)").encode()    // "rgb(10 20 30 / 0.5)"
-@moonrgba.Color::decode("lab(50% 50% -20%)").encode()      // "lab(50 62.5 -25)"
-@moonrgba.Color::decode("color(display-p3 .5 .2 .1)").encode()
-                                                           // "color(display-p3 0.5 0.2 0.1)"
-@moonrgba.Color::decode("currentcolor").encode()           // "currentcolor"
+let css = text => @moonrgba.Color::decode(text).encode()
+assert_eq(css("#123"), "#123")
+assert_eq(css("rgb(10 20 30 / 50%)"), "rgb(10 20 30 / 0.5)")
+assert_eq(css("lab(50% 50% -20%)"), "lab(50 62.5 -25)")
+assert_eq(css("color(display-p3 .5 .2 .1)"), "color(display-p3 0.5 0.2 0.1)")
+assert_eq(css("currentcolor"), "currentcolor")
 ```
 
 Writing is as short as it can be and still read back as the same colour: `#f00`
@@ -57,7 +60,7 @@ let refused : @moonrgba.Refused = try {
 } catch {
   error => error
 }
-println("\{refused}")    // at 7: got ), want a number
+assert_eq("\{refused}", "at 7: got ), want a number")
 ```
 
 `Unexpected(at~, got~, want~)` is a syntax error and `Unknown(at~, got~)` a name
@@ -96,8 +99,8 @@ keeps its value, and nothing is clipped behind the caller's back.
 
 ```moonbit
 let hsl = @moonrgba.Color::hsl(210.0, 0.5, 0.4)
-hsl.to_oklch().encode()      // "oklch(0.49931 0.09866 250.43306)"
-hsl.to_srgb().components()   // (0.2, 0.4, 0.6)
+assert_eq(hsl.to_oklch().encode(), "oklch(0.49931 0.09866 250.43306)")
+assert_eq(hsl.to_srgb().rgb8(), (51, 102, 153))
 ```
 
 | Space | Components | Reached through |
@@ -128,12 +131,12 @@ cheaper and changes the colour more.
 
 ```moonbit
 let wide = @moonrgba.Color::oklch(0.7, 0.4, 30.0)
-wide.in_gamut(space=@moonrgba.Space::Srgb)                 // false
-wide.to_srgb().encode()                                    // "color(srgb 1.31965 -0.44982 -0.31009)"
-wide.clip(space=@moonrgba.Space::Srgb).encode()            // "#f00"
-wide.to_gamut(space=@moonrgba.Space::Srgb).encode()        // "rgb(255 88.00945 67.46665)"
-wide.to_gamut(space=@moonrgba.Space::Srgb).to_oklch().encode()
-                                                           // "oklch(0.6831 0.2062 30.18163)"
+assert_eq(wide.in_gamut(space=Srgb), false)
+assert_eq(wide.to_srgb().encode(), "color(srgb 1.31965 -0.44982 -0.31009)")
+assert_eq(wide.clip(space=Srgb).encode(), "#f00")
+let fitted = wide.to_gamut(space=Srgb)
+assert_eq(fitted.encode(), "rgb(255 88.00945 67.46665)")
+assert_eq(fitted.to_oklch().encode(), "oklch(0.6831 0.2062 30.18163)")
 ```
 
 A colour already inside comes back untouched, so mapping twice is mapping once.
@@ -150,12 +153,14 @@ towards its own hue. A missing component takes the other colour's value first.
 ```moonbit
 let red = @moonrgba.Color::rgb(255, 0, 0)
 let blue = @moonrgba.Color::rgb(0, 0, 255)
-red.mix(blue, space=@moonrgba.Space::Srgb).encode()        // "rgb(127.5 0 127.5)"
-red.mix(blue, space=@moonrgba.Space::Oklab, weight=0.3).encode()
-                                                           // "oklab(0.5048 0.04474 -0.18032)"
-@moonrgba.Color::hsl(350.0, 1.0, 0.5)
-  .mix(@moonrgba.Color::hsl(10.0, 1.0, 0.5), space=@moonrgba.Space::Hsl, hue=Longer)
-  .hue()                                                   // 180
+assert_eq(red.mix(blue, space=Srgb).encode(), "rgb(127.5 0 127.5)")
+assert_eq(
+  red.mix(blue, space=Oklab, weight=0.3).encode(),
+  "oklab(0.5048 0.04474 -0.18032)",
+)
+let rose = @moonrgba.Color::hsl(350.0, 1.0, 0.5)
+let orange = @moonrgba.Color::hsl(10.0, 1.0, 0.5)
+assert_eq(rose.mix(orange, space=Hsl, hue=Longer).hue(), 180.0)
 ```
 
 `Hue` is `Shorter`, `Longer`, `Increasing` or `Decreasing`, and decides which way
@@ -173,9 +178,9 @@ from about −108 to 108, with the text first:
 ```moonbit
 let ink = @moonrgba.Color::black()
 let paper = @moonrgba.Color::white()
-ink.contrast(paper)      // 21
-ink.apca(paper)          // 106.04067321268862
-paper.apca(ink)          // -107.88473318309848
+assert_eq(ink.contrast(paper), 21.0)
+assert_eq(ink.apca(paper), 106.04067321268862)
+assert_eq(paper.apca(ink), -107.88473318309848)
 ```
 
 ## Colour difference
@@ -199,10 +204,10 @@ near white, and a distance in sRGB would not know that.
 
 ```moonbit
 let brand = @moonrgba.Color::decode("#0891b2")
-brand.to_ansi16()            // cyan
-brand.to_ansi256().code()    // 31
-brand.rgb8()                 // (8, 145, 178)
-@moonrgba.Ansi256::of(196).color().encode()   // "#f00"
+assert_eq(brand.to_ansi16(), Cyan)
+assert_eq(brand.to_ansi256().code(), 31)
+assert_eq(brand.rgb8(), (8, 145, 178))
+assert_eq(@moonrgba.Ansi256::of(196).color().encode(), "#f00")
 ```
 
 The sixteen colours are the ones xterm uses, which is what terminals show.
@@ -210,6 +215,7 @@ The sixteen colours are the ones xterm uses, which is what terminals show.
 
 ## The value
 
+<!-- nocheck -->
 ```moonbit
 pub(all) struct Color {
   space : Space
@@ -229,7 +235,7 @@ by the keyword and what interpolation then fills in from the other side.
 error message is something a browser would accept:
 
 ```moonbit
-println("\{@moonrgba.Color::decode("#0891b2")}")    // #0891b2
+assert_eq("\{@moonrgba.Color::decode("#0891b2")}", "#0891b2")
 ```
 
 ## Interface
