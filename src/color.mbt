@@ -407,12 +407,15 @@ pub fn Color::chroma(self : Color) -> Double {
 
 ///|
 /// The lightness, or NaN where the space has none.
+///
+/// HSV answers with its value, which is the same idea under the name television
+/// gave it. HWB does not: it keeps whiteness and blackness, and neither of them
+/// is a lightness, so it answers NaN and `lighten` works in OkLCh instead.
 pub fn Color::lightness(self : Color) -> Double {
   match self.space {
     Lab | Lch => self.x
     Oklab | Oklch => self.x
-    Hsl | Hwb => self.z
-    Hsv => self.z
+    Hsl | Hsv => self.z
     _ => @double.not_a_number
   }
 }

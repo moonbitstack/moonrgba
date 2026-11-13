@@ -536,6 +536,7 @@
 <h3><span class="kind">method</span>Color::lightness</h3>
 <pre class="sig">pub fn Color::lightness(self : Color) -&gt; Double</pre>
 <p>The lightness, or NaN where the space has none.</p>
+<p>HSV answers with its value, which is the same idea under the name television gave it. HWB does not: it keeps whiteness and blackness, and neither of them is a lightness, so it answers NaN and <code>lighten</code> works in OkLCh instead.</p>
 </div>
 <div class="entry" id="Color-saturation">
 <h3><span class="kind">method</span>Color::saturation</h3>
@@ -616,6 +617,7 @@
 <pre class="sig">pub fn Color::lighten(self : Color, amount : Double) -&gt; Color</pre>
 <p>Move the colour towards white by <code>amount</code>, a fraction of its space's lightness scale: 0.1 in HSL is a tenth of the way to white, 10 in Lab is ten units of lightness.</p>
 <p>Hue and chroma are kept, so this is not the same as mixing with white: a mix with white washes the chroma out as well.</p>
+<p>A colour whose space has no lightness of its own — sRGB, XYZ, HWB, CMYK — is converted to OkLCh first, and the answer is an OkLCh colour.</p>
 </div>
 <div class="entry" id="Color-darken">
 <h3><span class="kind">method</span>Color::darken</h3>

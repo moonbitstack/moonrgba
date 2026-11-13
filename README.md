@@ -86,10 +86,10 @@ refusal turned into `None`.
 `Hsl`, `Hwb`, `Lab`, `Lch`, `Oklab`, `Oklch`, `Color`, `Named` — and converts
 first if the colour is written in another space.
 
-Not read: `calc()`, `var()`, `env()`, `attr()`, the relative colour syntax
-(`rgb(from ...)`) and the system colours (`Canvas`, `ButtonText`). The first four
-need a cascade before they are a colour, and the last takes its value from the
-user's settings.
+Not read: `calc()`, `var()`, `env()` and `attr()`, which need a cascade before
+they are a colour, the relative colour syntax (`rgb(from ...)`), which is built
+out of `calc()` and cannot be resolved without it, and the system colours
+(`Canvas`, `ButtonText`), whose values come from the user's settings.
 
 ## Colour spaces
 
@@ -118,6 +118,15 @@ assert_eq(hsl.to_srgb().rgb8(), (51, 102, 153))
 
 `YCbCr` keeps the coefficients it was written with, so `to_ycbcr(luma=Bt601)` and
 `to_ycbcr(luma=Bt2020)` are different colours and not the same numbers.
+
+A grey has no hue, and says so rather than answering zero, which would be red:
+
+```moonbit
+assert_eq(
+  @moonrgba.Color::rgb(128, 128, 128).to_oklch().encode(),
+  "oklch(0.59987 0 none)",
+)
+```
 
 CMYK is four inks in a type of its own, because four do not fit in three
 components: `Color::to_cmyk` reduces to the ink combination with the most key,
@@ -168,6 +177,8 @@ round the circle a mix travels.
 
 `lighten`, `darken`, `saturate` and `desaturate` nudge one component of the
 colour's own space — a tenth of that space's scale — and `fade` takes alpha away.
+HWB has no such component: whiteness and blackness count towards each other, so a
+colour written in it is lightened in OkLCh, the way an sRGB colour is.
 
 ## Contrast
 

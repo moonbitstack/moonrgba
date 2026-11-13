@@ -316,9 +316,10 @@ rgb(8 145 178 / 0.5)<!-- /run:adjust --></code></pre>
         </div>
         <p>The amount is a fraction of the scale the colour's own space uses for that
           quantity, which is why the first two results are in Oklch: an sRGB colour has no
-          lightness to push on, so the adjustment happens where the quantity lives and the
-          result stays there. Hue is untouched throughout — a lighten that turned the colour
-          would be a different operation wearing the same name.</p>
+          lightness to push on, and neither has one written in HWB, whose whiteness and
+          blackness count towards each other. The adjustment happens where the quantity
+          lives and the result stays there. Hue is untouched throughout — a lighten that
+          turned the colour would be a different operation wearing the same name.</p>
         <p><code>fade</code> multiplies alpha, so 0.5 on an opaque colour leaves half, and
           applying it twice leaves a quarter.</p>
       </section>

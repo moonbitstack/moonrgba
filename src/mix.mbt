@@ -261,21 +261,15 @@ pub fn Color::mix(
 ///|
 /// Where a space keeps its lightness: first in the Lab family, last in the HSL
 /// family, which is why the index has to be asked for rather than assumed.
+///
+/// HWB is not in the last group. Its two named components are whiteness and
+/// blackness, and blackness counts the other way: adding to it darkens the
+/// colour, so a `lighten` that nudged it would move the colour the wrong way.
 fn Space::lightness_index(self : Space) -> Int32? {
   match self {
     Lab | Lch | Oklab | Oklch => Some(0)
-    Hsl | Hsv | Hwb => Some(2)
+    Hsl | Hsv => Some(2)
     _ => None
-  }
-}
-
-///|
-/// The space this colour's lightness belongs to, which is its own if it has one
-/// and OkLCh otherwise.
-fn Color::lightness_space(self : Color) -> Space {
-  match self.space {
-    Hsl | Hsv | Hwb | Lab | Lch | Oklab | Oklch => self.space
-    _ => Oklch
   }
 }
 
@@ -314,14 +308,18 @@ fn component_set(color : Color, index : Int32, value : Double) -> Color {
 ///
 /// Hue and chroma are kept, so this is not the same as mixing with white: a mix
 /// with white washes the chroma out as well.
+///
+/// A colour whose space has no lightness of its own — sRGB, XYZ, HWB, CMYK — is
+/// converted to OkLCh first, and the answer is an OkLCh colour.
 pub fn Color::lighten(self : Color, amount : Double) -> Color {
-  let space = self.lightness_space()
+  // One match decides both the space and the component, so a space can add a
+  // lightness only by saying where it keeps it.
+  let (space, index) = match self.space.lightness_index() {
+    Some(index) => (self.space, index)
+    None => (Oklch, 0)
+  }
   let color = self.to_space(space)
   let range = space.lightness_range()
-  let index = match space.lightness_index() {
-    Some(index) => index
-    None => 0
-  }
   let lightness = clamp01(
     (or_zero(component_at(color, index)) + amount * range) / range,
   )

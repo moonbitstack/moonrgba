@@ -17,6 +17,12 @@
 // `to_gamut` is where the decision about what to do with it is made.
 
 ///|
+/// How far apart two channels may be and still be the same channel. A 24-bit
+/// channel moves in steps of 1/255, which is six orders of magnitude above this;
+/// what it catches is the last few bits of a double after a conversion.
+let grey_epsilon : Double = 1.0e-9
+
+///|
 /// A missing component behaves as zero in conversion (CSS Color 4 §12.2).
 fn or_zero(value : Double) -> Double {
   if value.is_nan() {
@@ -463,7 +469,13 @@ fn srgb_to_hsl(r : Double, g : Double, b : Double) -> (Double, Double, Double) {
   let delta = maximum - minimum
   // A grey has no hue, and saying so is better than saying zero: a hue of zero
   // is red, and interpolating towards it from a real hue would swing through it.
-  if delta == 0.0 {
+  //
+  // "Grey" is decided with a tolerance rather than by equality, because a colour
+  // that reached this space through another one arrives with its channels a few
+  // units in the last place apart: white converted from XYZ is 1 + 2e-16 in one
+  // channel and 1 - 2e-16 in another, and a hue and a saturation worked out from
+  // that difference would be noise wearing the clothes of an answer.
+  if delta <= grey_epsilon {
     return (@double.not_a_number, 0.0, lightness)
   }
   let half = if lightness < 0.5 { lightness } else { 1.0 - lightness }
@@ -507,8 +519,12 @@ fn srgb_to_hsv(r : Double, g : Double, b : Double) -> (Double, Double, Double) {
   let maximum = max3(r, g, b)
   let minimum = min3(r, g, b)
   let delta = maximum - minimum
-  let saturation = if maximum == 0.0 { 0.0 } else { delta / maximum }
-  let hue = if delta == 0.0 {
+  let saturation = if maximum == 0.0 || delta <= grey_epsilon {
+    0.0
+  } else {
+    delta / maximum
+  }
+  let hue = if delta <= grey_epsilon {
     @double.not_a_number
   } else if maximum == r {
     ((g - b) / delta + (if g < b { 6.0 } else { 0.0 })) * 60.0
