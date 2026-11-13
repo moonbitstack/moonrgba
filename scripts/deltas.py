@@ -65,7 +65,7 @@ def main(target: str) -> None:
         )
         rows.append(["2000", "lab", *first, *second, delta_E_CIE2000(first, second)])
     lines = ["\t".join(str(field) for field in row) for row in rows]
-    with open(target, "w", encoding="utf-8") as handle:
+    with open(target, "w", encoding="utf-8", newline="\n") as handle:
         handle.write("\n".join(lines) + "\n")
     print(f"{len(rows)} rows written to {target}")
 

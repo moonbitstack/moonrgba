@@ -17,14 +17,20 @@
 
 import { writeFileSync } from "node:fs";
 
+// The revision the fixtures in `src/` were collected from, which is the last one
+// to touch these files. A suite that moves under the test would turn an upstream
+// edit into a red build here without anything having changed in this library, so
+// the whole tree is read at one commit rather than at `master`.
+const REVISION = "81316aef9c859b5b33eb58d3a6b52fb4f6ca4589";
+
 const BASE =
-  "https://raw.githubusercontent.com/web-platform-tests/wpt/master/css/css-color/parsing/";
+  `https://raw.githubusercontent.com/web-platform-tests/wpt/${REVISION}/css/css-color/parsing/`;
 
 // The helpers a few of the files use (`fuzzy_test_valid_color` and friends).
 // The harness itself is not taken from WPT: it needs a document, and everything
 // it would do with one is done here by a recorder instead.
 const SUPPORT =
-  "https://raw.githubusercontent.com/web-platform-tests/wpt/master/css/support/color-testcommon.js";
+  `https://raw.githubusercontent.com/web-platform-tests/wpt/${REVISION}/css/support/color-testcommon.js`;
 
 // The files that only need a value to be read: no layout, no cascade, no
 // computed style. The `color-computed-*` files ask a browser to resolve a

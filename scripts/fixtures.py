@@ -54,7 +54,7 @@ def main(kind: str, source: str, target: str) -> None:
     with open(source, encoding="utf-8") as handle:
         rows = [line.rstrip("\n") for line in handle if line.strip()]
 
-    with open(target, "w", encoding="utf-8") as handle:
+    with open(target, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(HEADERS[kind])
         handle.write("\n")
         handle.write("let %s : Array[String] = [\n" % NAMES[kind])
