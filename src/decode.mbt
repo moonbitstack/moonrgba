@@ -98,14 +98,19 @@ fn Cursor::offset(self : Cursor) -> Int32 {
 }
 
 ///|
-/// What was found at the cursor, for an error message: a short run of the input,
+/// What was found at an offset, for an error message: a short run of the input,
 /// or the end of it.
-fn Cursor::got(self : Cursor) -> String {
-  if self.done() {
+fn Cursor::got_from(self : Cursor, start : Int32) -> String {
+  if start >= self.length {
     return "end of input"
   }
-  let stop = if self.at + 12 < self.length { self.at + 12 } else { self.length }
-  self.text.clamped_view(start=self.at, end=stop).to_owned()
+  let stop = if start + 12 < self.length { start + 12 } else { self.length }
+  self.text.clamped_view(start~, end=stop).to_owned()
+}
+
+///|
+fn Cursor::got(self : Cursor) -> String {
+  self.got_from(self.at)
 }
 
 ///|
@@ -191,7 +196,17 @@ fn Cursor::skip_spaces(self : Cursor) -> Unit {
 /// is half a lightness in `oklab()` and 62.5 units of `a` in `lab()`, and only
 /// the function knows which, so the term carries what was written and the
 /// function decides what it means.
-priv enum Term {
+///
+/// The offset it starts at travels with it, so that a refusal about a component
+/// points at the component rather than at whatever the reader had reached by the
+/// time it looked back.
+priv struct Term {
+  kind : TermKind
+  at : Int32
+}
+
+///|
+priv enum TermKind {
   /// The `none` keyword: a component the author left out.
   Missing
   Number(Double)
@@ -297,18 +312,19 @@ fn Cursor::ident(self : Cursor) -> StringView {
 ///|
 /// A component, a number, a percentage, an angle, or `none`.
 fn read_term(cursor : Cursor) -> Term raise Refused {
+  let at = cursor.at
   if is_name_start(cursor.peek()) {
     let start = cursor.at
     let word = cursor.ident()
     if word.equal_ignore_ascii_case("none") {
-      return Missing
+      return { kind: Missing, at, }
     }
     cursor.at = start
     raise cursor.unknown(word.to_owned())
   }
   let value = parse_number(cursor)
   if cursor.eat(0x25) {
-    return Percent(value)
+    return { kind: Percent(value), at, }
   }
   if is_name_start(cursor.peek()) {
     let start = cursor.at
@@ -325,14 +341,14 @@ fn read_term(cursor : Cursor) -> Term raise Refused {
       None
     }
     match factor {
-      Some(factor) => return Angle(value * factor)
+      Some(factor) => return { kind: Angle(value * factor), at, }
       None => {
         cursor.at = start
         raise cursor.unknown(unit.to_owned())
       }
     }
   }
-  Number(value)
+  { kind: Number(value), at, }
 }
 
 ///|
@@ -362,19 +378,26 @@ fn convert_term(
   wanted : Wanted,
   cursor : Cursor,
 ) -> Double raise Refused {
-  match term {
+  match term.kind {
     Missing => @double.not_a_number
     Angle(degrees) =>
       match wanted {
         Hue => wrap_hue(degrees)
         _ =>
-          raise cursor.unexpected(
-            "a number, because only a hue may be an angle",
+          raise Unexpected(
+            at=term.at,
+            got=cursor.got_from(term.at),
+            want="a number, because only a hue may be an angle",
           )
       }
     Percent(value) =>
       match wanted {
-        Hue => raise cursor.unexpected("a number or angle, not a percentage")
+        Hue =>
+          raise Unexpected(
+            at=term.at,
+            got=cursor.got_from(term.at),
+            want="a number or angle, not a percentage",
+          )
         Channel => clamp01(value / 100.0)
         Fraction => value / 100.0
         Percentage => clamp01(value / 100.0)
@@ -408,7 +431,7 @@ fn parse_component_after_space(
 ///|
 /// The alpha of a legacy argument list, where `none` had not been invented yet.
 fn legacy_alpha(cursor : Cursor, term : Term) -> Double raise Refused {
-  if term is Missing {
+  if term.kind is Missing {
     raise cursor.unexpected(
       "a number for alpha, because `none` is modern syntax",
     )
@@ -487,13 +510,11 @@ fn parse_hex(cursor : Cursor) -> Color raise Refused {
 ///|
 /// `rgb()` and `rgba()`, in either syntax. The first separator decides which:
 /// a comma means the legacy list, whose rules are stricter, and a space the
-/// modern one.
-fn parse_rgb(cursor : Cursor, legacy_name : Bool) -> Color raise Refused {
+/// modern one. `rgba()` is an alias rather than a second grammar, so both names
+/// reach this.
+fn parse_rgb(cursor : Cursor) -> Color raise Refused {
   let first = read_term(cursor)
   if cursor.at_comma() {
-    if !legacy_name {
-      raise cursor.unexpected("a space, because rgb() has no comma syntax")
-    }
     return parse_rgb_legacy(cursor, first)
   }
   let red = convert_term(first, Channel, cursor)
@@ -526,31 +547,25 @@ fn parse_rgb_legacy(cursor : Cursor, first : Term) -> Color raise Refused {
   }
   // One match decides both whether the list is legal and what it means: all
   // numbers, or all percentages, and no `none`, which the modern syntax added.
-  let channels = match (first, second, third) {
+  let (r, g, b) = match (first.kind, second.kind, third.kind) {
     (Number(r), Number(g), Number(b)) =>
-      Some((clamp01(r / 255.0), clamp01(g / 255.0), clamp01(b / 255.0)))
+      (clamp01(r / 255.0), clamp01(g / 255.0), clamp01(b / 255.0))
     (Percent(r), Percent(g), Percent(b)) =>
-      Some((clamp01(r / 100.0), clamp01(g / 100.0), clamp01(b / 100.0)))
+      (clamp01(r / 100.0), clamp01(g / 100.0), clamp01(b / 100.0))
     (Missing, _, _) | (_, Missing, _) | (_, _, Missing) =>
       raise cursor.unexpected("numbers, because `none` is modern syntax")
     _ =>
       raise cursor.unexpected("three numbers or three percentages, not a mix")
   }
-  match channels {
-    Some((r, g, b)) => Color::srgb(r, g, b, alpha~)
-    None => raise cursor.unexpected("three numbers or three percentages")
-  }
+  Color::srgb(r, g, b, alpha~)
 }
 
 ///|
 /// `hsl()` and `hsla()`, in either syntax.
-fn parse_hsl(cursor : Cursor, legacy_name : Bool) -> Color raise Refused {
+fn parse_hsl(cursor : Cursor) -> Color raise Refused {
   let first = read_term(cursor)
   if cursor.at_comma() {
-    if !legacy_name {
-      raise cursor.unexpected("a space, because hsl() has no comma syntax")
-    }
-    let hue = match first {
+    let hue = match first.kind {
       Number(value) => wrap_hue(value)
       Angle(degrees) => wrap_hue(degrees)
       _ => raise cursor.unexpected("a number or angle for the hue")
@@ -565,8 +580,8 @@ fn parse_hsl(cursor : Cursor, legacy_name : Bool) -> Color raise Refused {
     cursor.skip_spaces()
     let lightness = read_term(cursor)
     // A legacy list requires percentages here, which the modern one does not.
-    let pair = match (saturation, lightness) {
-      (Percent(s), Percent(l)) => Some((clamp01(s / 100.0), clamp01(l / 100.0)))
+    let (saturation, lightness) = match (saturation.kind, lightness.kind) {
+      (Percent(s), Percent(l)) => (clamp01(s / 100.0), clamp01(l / 100.0))
       (Missing, _) | (_, Missing) =>
         raise cursor.unexpected("percentages, because `none` is modern syntax")
       _ => raise cursor.unexpected("percentages for saturation and lightness")
@@ -579,12 +594,7 @@ fn parse_hsl(cursor : Cursor, legacy_name : Bool) -> Color raise Refused {
       cursor.skip_spaces()
       1.0
     }
-    match pair {
-      Some((saturation, lightness)) =>
-        Color::hsl(hue, saturation, lightness, alpha~)
-      None =>
-        raise cursor.unexpected("percentages for saturation and lightness")
-    }
+    Color::hsl(hue, saturation, lightness, alpha~)
   } else {
     let hue = convert_term(first, Hue, cursor)
     let saturation = parse_component_after_space(cursor, Percentage)
@@ -698,9 +708,9 @@ fn parse_function(
   cursor.skip_spaces()
   let key = name.to_lower()
   let color = if key.equal("rgb") || key.equal("rgba") {
-    parse_rgb(cursor, true)
+    parse_rgb(cursor)
   } else if key.equal("hsl") || key.equal("hsla") {
-    parse_hsl(cursor, true)
+    parse_hsl(cursor)
   } else if key.equal("hwb") {
     parse_hwb(cursor)
   } else if key.equal("lab") {
