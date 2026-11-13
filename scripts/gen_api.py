@@ -394,8 +394,29 @@ def render() -> str:
     return page
 
 
+def check_complete(page: str) -> None:
+    """Fail if a public item has no entry of its own.
+
+    The page is checked against the interface file it was written from rather
+    than against a list kept by hand, so a function added to the package and not
+    to a band is caught here instead of on the page. Trait plumbing is the one
+    deliberate omission: `equal`, `to_string`, `output` and their friends are
+    shown on the type they belong to, not as entries.
+    """
+    missing = []
+    for item in interface():
+        if item["kind"] == "impl" or item["name"] in NOISE:
+            continue
+        key = key_of(item)
+        if f'id="{anchor(key)}"' not in page and f"<h4>{key}</h4>" not in page:
+            missing.append(key)
+    if missing:
+        sys.exit("the reference has no entry for " + ", ".join(sorted(missing)))
+
+
 def main() -> None:
     page = render()
+    check_complete(page)
     if "--check" in sys.argv[1:]:
         if PAGE.read_text(encoding="utf-8") != page:
             sys.exit("docs/api.html is out of date; run python scripts/gen_api.py")
