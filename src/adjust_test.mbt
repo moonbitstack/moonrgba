@@ -70,3 +70,24 @@ test "fade takes alpha away without touching the colour" {
   // Fading an already transparent colour does not bring it back.
   assert_eq(base.fade(1.0).fade(0.5).alpha, 0.0)
 }
+
+///|
+/// HWB keeps whiteness and blackness, and blackness counts downwards, so a
+/// `lighten` that nudged it would darken the colour. A colour written in HWB is
+/// lightened in OkLCh instead, the same way one written in sRGB is.
+test "lighten works on an HWB colour without darkening it" {
+  let pale = @moonrgba.Color::hwb(210.0, 0.4, 0.1)
+  let lighter = pale.lighten(0.2)
+  assert_eq(lighter.space, @moonrgba.Space::Oklch)
+  assert_true(
+    lighter.lightness() > pale.to_oklch().lightness(),
+    msg="\{lighter.lightness()} against \{pale.to_oklch().lightness()}",
+  )
+  let darker = pale.darken(0.2)
+  assert_true(darker.lightness() < pale.to_oklch().lightness())
+  // White's blackness is zero, so nudging it could not have made it lighter.
+  assert_true(
+    @moonrgba.Color::hwb(210.0, 0.0, 0.0).lighten(0.1).lightness() >=
+    @moonrgba.Color::hwb(210.0, 0.0, 0.0).to_oklch().lightness(),
+  )
+}

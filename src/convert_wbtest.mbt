@@ -275,3 +275,66 @@ test "every space survives a round trip through sRGB and back" {
     )
   }
 }
+
+///|
+/// The sRGB transfer curve is a straight line below its break and a power above
+/// it, and the two meet at 0.04045: a value inside the linear segment has to
+/// stay on the straight line, or a dark colour comes out twenty parts per
+/// million off its own definition.
+test "the sRGB transfer curve keeps a linear segment at the dark end" {
+  // 0.00312 is inside the segment on the linear-light side, whose break is
+  // 0.0031308; 0.0403 is inside it on the gamma side, whose break is 0.04045.
+  let gamma = Color::srgb_linear(0.00312, 0.00312, 0.00312).to_srgb()
+  assert_true(
+    close_enough(gamma.x, 0.00312 * 12.92, 1.0e-15, 1.0e-15),
+    msg="linear to gamma below the break: \{gamma.x}",
+  )
+  let linear = Color::srgb(0.0403, 0.0403, 0.0403).to_srgb_linear()
+  assert_true(
+    close_enough(linear.x, 0.0403 / 12.92, 1.0e-15, 1.0e-15),
+    msg="gamma to linear below the break: \{linear.x}",
+  )
+  // Above it the curve is the power every other implementation uses, so that a
+  // mid grey is the value a screen expects.
+  let above = Color::srgb(0.5, 0.5, 0.5).to_srgb_linear()
+  assert_true(
+    close_enough(above.x, 0.21404114048223255, 1.0e-12, 1.0e-12),
+    msg="mid grey in linear light: \{above.x}",
+  )
+  // The two segments meet: the value at the break is the same from either side.
+  let at_break = Color::srgb_linear(0.0031308, 0.0031308, 0.0031308).to_srgb()
+  assert_true(
+    close_enough(at_break.x, 0.040449936, 1.0e-9, 1.0e-9),
+    msg="the value at the break: \{at_break.x}",
+  )
+}
+
+///|
+/// A hue is an angle, so a constructor may be handed one below zero or beyond a
+/// turn; it means what the same angle a turn round means. Reading a value from
+/// CSS wraps the angle already, which is why this is easy to leave untested.
+test "a hue outside one turn is the angle a turn round from it" {
+  let below = Color::hsl(-30.0, 1.0, 0.5).to_srgb()
+  let above = Color::hsl(330.0, 1.0, 0.5).to_srgb()
+  assert_true(
+    close_enough(below.x, above.x, 1.0e-14, 1.0e-14) &&
+    close_enough(below.y, above.y, 1.0e-14, 1.0e-14) &&
+    close_enough(below.z, above.z, 1.0e-14, 1.0e-14),
+    msg="hsl: \{below} against \{above}",
+  )
+  let beyond = Color::hsv(390.0, 1.0, 1.0).to_srgb()
+  let same = Color::hsv(30.0, 1.0, 1.0).to_srgb()
+  assert_true(
+    close_enough(beyond.x, same.x, 1.0e-14, 1.0e-14) &&
+    close_enough(beyond.y, same.y, 1.0e-14, 1.0e-14),
+    msg="hsv: \{beyond} against \{same}",
+  )
+  let negative = Color::lch(50.0, 60.0, -90.0).to_srgb()
+  let wrapped = Color::lch(50.0, 60.0, 270.0).to_srgb()
+  assert_true(
+    close_enough(negative.x, wrapped.x, 1.0e-12, 1.0e-12) &&
+    close_enough(negative.y, wrapped.y, 1.0e-12, 1.0e-12) &&
+    close_enough(negative.z, wrapped.z, 1.0e-12, 1.0e-12),
+    msg="lch: \{negative} against \{wrapped}",
+  )
+}

@@ -262,3 +262,32 @@ test "an empty string is not a colour" {
   assert_true(@moonrgba.Color::decode_opt("   ") is None)
   assert_true(@moonrgba.Color::decode_opt("#f00 #0f0") is None)
 }
+
+///|
+/// A number may be written with an exponent, which is how a generator that
+/// prints a computed value writes a very small one.
+test "a number may carry an exponent" {
+  assert_eq(read("rgb(1e2 0 0)").x, 100.0 / 255.0)
+  assert_eq(read("rgb(1E2 0 0)").x, 100.0 / 255.0)
+  assert_eq(read("rgb(1e+2 0 0)").x, 100.0 / 255.0)
+  assert_eq(read("rgb(1e-2 0 0)").x, 0.01 / 255.0)
+  assert_eq(read("rgb(2.5e1 0 0)").x, 25.0 / 255.0)
+  assert_eq(read("oklch(5e-1 1e-1 2e0)").components(), (0.5, 0.1, 2.0))
+  // An `e` with no digits after it is an identifier, not an exponent, and an
+  // identifier where a number belongs is not a colour.
+  for text in ["rgb(1e 0 0)", "rgb(1e+ 0 0)", "rgb(1em 0 0)"] {
+    assert_true(@moonrgba.Color::decode_opt(text) is None, msg=text)
+  }
+}
+
+///|
+/// A refusal writes itself as one line a log or an error message can carry: where
+/// it stopped, what it found, and what the syntax wanted there.
+test "a refusal writes itself as a line of prose" {
+  assert_eq("\{refusal_of("rgb(1 2)")}", "at 7: got ), want a number")
+  assert_eq("\{refusal_of("notacolour")}", "at 0: unknown notacolour")
+  assert_eq(
+    "\{refusal_of("rgb(1 2 3deg)")}",
+    "at 8: got 3deg), want a number, because only a hue may be an angle",
+  )
+}

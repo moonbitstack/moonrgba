@@ -157,3 +157,15 @@ test "the OK measure is the Oklab distance itself" {
   let in_lab = base.to_lab().delta_e(neighbour.to_lab(), delta=E76)
   assert_true(in_lab > 1.0, msg="\{in_lab}")
 }
+
+///|
+/// The measure a caller gets without naming one is ΔE 2000, the current CIE
+/// recommendation: it is the one a print or a paint shop asks for, and the 1976
+/// straight line it replaced would answer with a number three times as large.
+test "the measure nobody names is ΔE 2000" {
+  let first = Color::lab(50.0, 12.0, -30.0)
+  let second = Color::lab(56.0, -4.0, 22.0)
+  assert_eq(first.delta_e(second), first.delta_e(second, delta=E2000))
+  assert_true(first.delta_e(second) != first.delta_e(second, delta=E76))
+  assert_true(first.delta_e(second) != first.delta_e(second, delta=Ok))
+}

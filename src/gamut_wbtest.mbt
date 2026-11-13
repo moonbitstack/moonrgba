@@ -222,3 +222,27 @@ test "alpha survives the mapping" {
   assert_eq(mapped.alpha, 0.25)
   assert_eq(outside.clip(space=Space::Srgb).alpha, 0.25)
 }
+
+///|
+/// Only an RGB space has a gamut. A Lab or XYZ colour is a colour wherever it
+/// sits, so asking whether it is inside one answers yes and clipping it changes
+/// nothing.
+test "a space with no gamut has nothing to clip" {
+  let lab = Color::lab(50.0, 200.0, -200.0)
+  assert_eq(lab.in_gamut(), true)
+  assert_eq(lab.clip().components(), lab.components())
+  assert_eq(lab.to_gamut().components(), lab.components())
+  // Asked about an RGB space it is outside of, it is still outside.
+  assert_eq(lab.in_gamut(space=Srgb), false)
+}
+
+///|
+/// A missing component is not outside anything, and clipping leaves it missing
+/// rather than inventing a zero: `none` is a value CSS carries, and a clip that
+/// turned it into black would lose it.
+test "a missing component has no gamut to be outside of" {
+  let missing = Color::of(Srgb, @double.not_a_number, 0.0, 0.0)
+  assert_eq(missing.in_gamut(), true)
+  assert_true(missing.clip().x.is_nan())
+  assert_true(missing.to_gamut().x.is_nan())
+}

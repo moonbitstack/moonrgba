@@ -255,3 +255,45 @@ test "numbers are written plainly" {
     "lab(50 0 0)",
   )
 }
+
+///|
+/// A hue is an angle, so the one that rounds to a whole turn is written as zero:
+/// `hsl(360 100% 50%)` and `hsl(0 100% 50%)` are the same colour, and the second
+/// is the one a reader expects.
+test "a hue that rounds to a whole turn is written as zero" {
+  assert_eq(
+    @moonrgba.Color::hsl(359.9999996, 1.0, 0.5).encode(),
+    "hsl(0 100% 50%)",
+  )
+  assert_eq(
+    @moonrgba.Color::oklch(0.6, 0.1, 359.9999996).encode(format=Oklch),
+    "oklch(0.6 0.1 0)",
+  )
+  // A hue just short of a turn keeps its last place rather than turning into one.
+  assert_eq(
+    @moonrgba.Color::hsl(359.999, 1.0, 0.5).encode(),
+    "hsl(359.999 100% 50%)",
+  )
+}
+
+///|
+/// A hexadecimal spelling has no way to say `none`, so a component the author
+/// left out is written as zero there — and `Shortest` keeps it, because `rgb()`
+/// can say `none` and a hexadecimal colour cannot.
+test "a format that cannot say none writes zero, and the shortest one keeps it" {
+  let missing = @moonrgba.Color::of(
+    @moonrgba.Space::Srgb,
+    @double.not_a_number,
+    0.0,
+    0.0,
+  )
+  assert_eq(missing.encode(format=Hex), "#000")
+  assert_eq(missing.encode(), "rgb(none 0 0)")
+  let half_missing = @moonrgba.Color::of(
+    @moonrgba.Space::Oklch,
+    @double.not_a_number,
+    0.1,
+    200.0,
+  )
+  assert_eq(half_missing.encode(format=Oklch), "oklch(none 0.1 200)")
+}

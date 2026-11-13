@@ -209,3 +209,76 @@ test "CMYK prints the colour it was given, though not always the inks" {
   )
   assert_true(near(@moonrgba.Color::black().to_cmyk().k, 1.0, 1.0e-12))
 }
+
+///|
+/// A grey has no hue, in every space whose third component is an angle. A hue of
+/// zero is red, so a grey that claimed one would drag an interpolation towards
+/// red on its way past.
+test "a grey reports no hue" {
+  for
+    grey in [
+      @moonrgba.Color::rgb(0, 0, 0),
+      @moonrgba.Color::rgb(128, 128, 128),
+      @moonrgba.Color::rgb(255, 255, 255),
+    ] {
+    assert_true(grey.to_hsl().hue().is_nan(), msg="hsl of \{grey}")
+    assert_true(grey.to_hsv().hue().is_nan(), msg="hsv of \{grey}")
+    assert_true(grey.to_hwb().hue().is_nan(), msg="hwb of \{grey}")
+    assert_true(grey.to_lch().hue().is_nan(), msg="lch of \{grey}")
+    assert_true(grey.to_oklch().hue().is_nan(), msg="oklch of \{grey}")
+  }
+  // A colour that is not grey does have one, so the answer is not always NaN.
+  assert_false(@moonrgba.Color::rgb(120, 130, 140).to_hsl().hue().is_nan())
+}
+
+///|
+/// Lightness is reported for the spaces that have one under that name — HSL's
+/// lightness, the Lab family's first component, HSV's value — and not for HWB,
+/// whose whiteness and blackness are a different pair of axes.
+test "lightness is reported where a space has it" {
+  assert_eq(@moonrgba.Color::hsl(210.0, 0.5, 0.4).lightness(), 0.4)
+  assert_eq(@moonrgba.Color::hsv(210.0, 0.5, 0.4).lightness(), 0.4)
+  assert_eq(@moonrgba.Color::oklch(0.62, 0.1, 200.0).lightness(), 0.62)
+  assert_eq(@moonrgba.Color::oklab(0.62, 0.1, -0.1).lightness(), 0.62)
+  assert_true(@moonrgba.Color::hwb(210.0, 0.1, 0.2).lightness().is_nan())
+  assert_true(@moonrgba.Color::srgb(0.2, 0.4, 0.6).lightness().is_nan())
+}
+
+///|
+/// Every space answers to the name it writes and to no other, including the luma
+/// variants and the keyword that is not a space.
+test "every space is found by the name it writes" {
+  for
+    space in [
+      @moonrgba.Space::YCbCr(@moonrgba.Luma::Bt709),
+      @moonrgba.Space::YCbCr(@moonrgba.Luma::Bt2020),
+      @moonrgba.Space::Current,
+    ] {
+    assert_eq(@moonrgba.Space::of(space.code()), Some(space))
+  }
+  assert_eq(
+    @moonrgba.Space::of("YCBCR-601"),
+    Some(@moonrgba.Space::YCbCr(@moonrgba.Luma::Bt601)),
+  )
+  // A space with no syntax of its own is not one `color()` accepts.
+  assert_false(@moonrgba.Space::Hsv.is_predefined())
+  assert_false(@moonrgba.Space::Current.is_predefined())
+  assert_true(@moonrgba.Space::XyzD65.is_predefined())
+}
+
+///|
+/// The enum types write themselves the way a stylesheet or a theme file spells
+/// them, which is what makes them safe to put in a log line.
+test "the enums write themselves as a reader would spell them" {
+  assert_eq(@moonrgba.Space::DisplayP3.to_string(), "display-p3")
+  assert_eq(
+    @moonrgba.Space::YCbCr(@moonrgba.Luma::Bt2020).to_string(),
+    "ycbcr-2020",
+  )
+  assert_eq(@moonrgba.Format::Oklch.to_string(), "oklch")
+  assert_eq(@moonrgba.Format::Shortest.to_string(), "shortest")
+  assert_eq(@moonrgba.Hue::Longer.to_string(), "longer")
+  assert_eq(@moonrgba.Delta::E2000.to_string(), "ΔE 2000")
+  assert_eq(@moonrgba.Ansi16::BrightCyan.to_string(), "bright-cyan")
+  assert_eq(@moonrgba.Ansi256::of(196).to_string(), "196")
+}
